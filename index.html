@@ -34,7 +34,11 @@
   #list .item.active{border-color:#ffb340;background:rgba(50,32,4,.75)}
   #list .hd{font-size:11px;color:#8fa8cc;letter-spacing:.15em;margin:2px 2px 0}
   /* 播放面板 */
-  #player{position:absolute;right:14px;top:86px;width:min(430px,calc(100vw - 28px));z-index:6;background:rgba(6,13,28,.92);border:1px solid rgba(140,180,255,.35);border-radius:14px;overflow:hidden;backdrop-filter:blur(10px);transform:translateX(115%);transition:transform .35s cubic-bezier(.2,.8,.25,1);box-shadow:0 18px 50px rgba(0,0,0,.6)}
+  #player{position:absolute;right:14px;top:86px;width:min(520px,calc(100vw - 28px));z-index:6;background:rgba(6,13,28,.92);border:1px solid rgba(140,180,255,.35);border-radius:14px;overflow:hidden;backdrop-filter:blur(10px);transform:translateX(115%);transition:transform .35s cubic-bezier(.2,.8,.25,1);box-shadow:0 18px 50px rgba(0,0,0,.6)}
+  /* 放大模式：盖住整个地球，只给左侧列表留出位置 */
+  #player.max{left:236px;top:0;bottom:0;right:0;width:auto;border-radius:0;display:flex;flex-direction:column}
+  #player.max .vwrap{padding-top:0;flex:1 1 auto}
+  #player.max .meta{flex-shrink:0}
   #player.open{transform:none}
   #player .vwrap{position:relative;padding-top:56.25%;background:#000}
   #player iframe,#player video,#player img.snap{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;background:#000}
@@ -51,7 +55,7 @@
   #hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;background:rgba(5,12,26,.75);border:1px solid rgba(140,180,255,.25);color:#a9c0e2;font-size:12px;padding:6px 14px;border-radius:999px;white-space:nowrap;backdrop-filter:blur(6px)}
   #tip{position:absolute;z-index:8;pointer-events:none;background:rgba(5,12,26,.9);border:1px solid rgba(140,180,255,.4);padding:4px 9px;border-radius:6px;font-size:12px;color:#eaf2ff;display:none;white-space:nowrap}
   .sel-pin{font-size:30px;line-height:1;filter:drop-shadow(0 4px 5px rgba(0,0,0,.55));cursor:pointer}
-  @media (max-width:760px){ #list{display:none} #player{top:auto;bottom:44px} header h1{font-size:18px} }
+  @media (max-width:760px){ #list{display:none} #player{top:auto;bottom:44px} #player.max{left:0;top:44px;bottom:0} header h1{font-size:18px} }
 </style>
 </head>
 <body>
@@ -79,6 +83,7 @@
     <div class="desc" id="pDesc"></div>
     <div class="row">
       <button id="openSrc">▶ 在源站打开</button>
+      <button id="expandBtn">⛶ 放大</button>
       <button id="nextBtn">⏭ 随机下一个</button>
     </div>
   </div>
@@ -237,7 +242,8 @@ function openCam(cam, fly=true){
   player.classList.add("open");
   if(fly && !cam.iss) map.flyTo({center:[cam.lon,cam.lat], zoom:Math.max(map.getZoom(),3.4), speed:0.9, curve:1.4, essential:true});
 }
-document.getElementById("close").onclick=()=>{ player.classList.remove("open"); stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
+document.getElementById("close").onclick=()=>{ player.classList.remove("open"); player.classList.remove("max"); document.getElementById("expandBtn").textContent="⛶ 放大"; stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
+document.getElementById("expandBtn").onclick=e=>{ const m=player.classList.toggle("max"); e.target.textContent = m ? "⛶ 还原" : "⛶ 放大"; };
 document.getElementById("nextBtn").onclick=()=>randomCam();
 document.getElementById("randomBtn").onclick=()=>randomCam();
 function randomCam(){ const pool=CAMS.filter(c=>!c.disabled); openCam(pool[Math.floor(Math.random()*pool.length)]); }
