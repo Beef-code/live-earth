@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>直播地球 · 世界风景直播</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.18/dist/hls.min.js"></script>
+<style>
+  *{box-sizing:border-box} html,body{margin:0;height:100%;background:#04070d;color:#eaf2ff;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;overflow:hidden}
+  #map{position:absolute;inset:0;background:radial-gradient(1200px 700px at 50% 42%, #0b1a33 0%, #04070d 60%)}
+  .maplibregl-ctrl-attrib{background:rgba(4,10,20,.55)!important;color:#7f95b5!important;font-size:10px!important}
+  .maplibregl-ctrl-attrib a{color:#7f95b5!important}
+  header{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px;pointer-events:none;z-index:5}
+  header .brand{pointer-events:auto}
+  header h1{margin:0;font-size:21px;letter-spacing:.06em;font-weight:700}
+  header p{margin:3px 0 0;font-size:12px;color:#9db4d6}
+  header .tools{pointer-events:auto;display:flex;gap:8px}
+  button,.chipbtn{cursor:pointer;border:1px solid rgba(140,180,255,.35);background:rgba(10,22,44,.78);color:#dbe9ff;border-radius:999px;padding:7px 13px;font-size:12.5px;backdrop-filter:blur(6px)}
+  button:hover{border-color:#6db3ff;color:#fff}
+  /* 地图上的点 */
+  .cam-dot{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 0 4px rgba(0,0,0,.25),0 2px 10px rgba(0,0,0,.6);position:relative;transition:transform .15s}
+  .cam-dot:hover{transform:scale(1.25)}
+  .cam-dot::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:1.5px solid currentColor;opacity:.55;animation:pulse 2.2s infinite}
+  @keyframes pulse{0%{transform:scale(.55);opacity:.8}70%{transform:scale(1);opacity:0}100%{opacity:0}}
+  .cam-label{position:absolute;left:34px;top:50%;transform:translateY(-50%);white-space:nowrap;background:rgba(5,12,26,.82);border:1px solid rgba(140,180,255,.3);padding:3px 8px;border-radius:6px;font-size:11.5px;color:#eaf2ff;opacity:0;pointer-events:none;transition:opacity .15s}
+  .cam-dot:hover .cam-label{opacity:1}
+  /* 左侧列表 */
+  #list{position:absolute;left:14px;top:86px;bottom:16px;width:212px;z-index:4;display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding-right:2px;scrollbar-width:thin}
+  #list .item{text-align:left;border-radius:10px;padding:8px 11px;background:rgba(8,18,38,.72);border:1px solid rgba(120,160,230,.22);color:#dbe9ff;backdrop-filter:blur(6px)}
+  #list .item b{display:block;font-size:13px;font-weight:600}
+  #list .item span{font-size:11px;color:#93a9cc}
+  #list .item.active{border-color:#ffb340;background:rgba(50,32,4,.75)}
+  #list .hd{font-size:11px;color:#8fa8cc;letter-spacing:.15em;margin:2px 2px 0}
+  /* 播放面板 */
+  #player{position:absolute;right:14px;top:86px;width:min(430px,calc(100vw - 28px));z-index:6;background:rgba(6,13,28,.92);border:1px solid rgba(140,180,255,.35);border-radius:14px;overflow:hidden;backdrop-filter:blur(10px);transform:translateX(115%);transition:transform .35s cubic-bezier(.2,.8,.25,1);box-shadow:0 18px 50px rgba(0,0,0,.6)}
+  #player.open{transform:none}
+  #player .vwrap{position:relative;padding-top:56.25%;background:#000}
+  #player iframe,#player video,#player img.snap{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;background:#000}
+  #player .livebadge.hls{background:#2563eb} #player .livebadge.img{background:#2e9e5b}
+  #list .item .src{color:#7fd4a8}
+  #player .vempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8fa8cc;font-size:13px;padding:20px;text-align:center}
+  #player .meta{padding:12px 14px 14px}
+  #player h2{margin:0;font-size:16.5px}
+  #player .sub{margin-top:3px;font-size:12px;color:#9db4d6}
+  #player .desc{margin-top:8px;font-size:12.5px;line-height:1.65;color:#c6d6f2}
+  #player .row{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+  #player .livebadge{display:inline-block;background:#e33;color:#fff;border-radius:4px;font-size:10.5px;padding:1.5px 6px;vertical-align:2px;margin-right:6px;letter-spacing:.08em}
+  #close{position:absolute;top:8px;right:8px;z-index:2;width:30px;height:30px;padding:0;border-radius:50%;font-size:15px;line-height:1}
+  #hint{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;background:rgba(5,12,26,.75);border:1px solid rgba(140,180,255,.25);color:#a9c0e2;font-size:12px;padding:6px 14px;border-radius:999px;white-space:nowrap;backdrop-filter:blur(6px)}
+  #tip{position:absolute;z-index:8;pointer-events:none;background:rgba(5,12,26,.9);border:1px solid rgba(140,180,255,.4);padding:4px 9px;border-radius:6px;font-size:12px;color:#eaf2ff;display:none;white-space:nowrap}
+  .sel-pin{font-size:30px;line-height:1;filter:drop-shadow(0 4px 5px rgba(0,0,0,.55));cursor:pointer}
+  @media (max-width:760px){ #list{display:none} #player{top:auto;bottom:44px} header h1{font-size:18px} }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<header>
+  <div class="brand">
+    <h1>🌍 直播地球</h1>
+    <p>点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 开放直连流 + 官方快照，开放的都收</p>
+  </div>
+  <div class="tools">
+    <button id="spinBtn">⏸ 暂停自转</button>
+    <button id="randomBtn">🎲 随机飞一个</button>
+  </div>
+</header>
+
+<nav id="list"></nav>
+
+<aside id="player">
+  <button id="close" title="关闭">✕</button>
+  <div class="vwrap"><div class="vempty" id="vempty">选一个点，这里就会播那里的直播</div><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><video id="vid" controls autoplay muted playsinline style="display:none"></video><img id="snap" class="snap" alt="" style="display:none"></div>
+  <div class="meta">
+    <h2 id="pTitle"></h2>
+    <div class="sub" id="pSub"></div>
+    <div class="desc" id="pDesc"></div>
+    <div class="row">
+      <button id="openSrc">▶ 在源站打开</button>
+      <button id="nextBtn">⏭ 随机下一个</button>
+    </div>
+  </div>
+</aside>
+
+<div id="hint">拖动转地球 · 滚轮缩放 · 点光点看直播</div>
+<div id="tip"></div>
+
+<script>
+/* ============================================================
+   加新摄像头：照着下面格式在 CAMS 里加一行就行，三种源：
+   ① YouTube：yt 填直播的视频ID（watch?v= 后面那串）；固定直播频道可填 channel:"UCxxxx"
+   ② 直连流：type:"hls", src 填 .m3u8 地址（必须带跨域允许，否则浏览器播不了）
+   ③ 官方快照：type:"img", src 填图片地址, refresh 填多少秒换一张；page 填源站页（可选）
+   lat/lon 是经纬度，tz 是当地时区（写错只是时钟不对）
+   ============================================================ */
+const CAMS = [
+  {name:"涩谷十字路口", en:"Shibuya Crossing", place:"日本 · 东京", lat:35.6595, lon:139.7005, yt:"dfVK7ld38Ys", tz:"Asia/Tokyo", cat:"城市", icon:"🚥", desc:"全世界最有名的十字路口，高峰时一次绿灯几千人同时过马路。晚上霓虹最热闹。"},
+  {name:"东京湾 · 彩虹大桥", en:"Tokyo Bay", place:"日本 · 东京", lat:35.636, lon:139.77, yt:"_k-5U7IeK8g", tz:"Asia/Tokyo", cat:"城市", icon:"🌉", desc:"Tokyo Views 频道的固定机位，看彩虹大桥和东京湾，夜里桥会亮灯，适合当背景放着。"},
+{name:"威尼斯大运河", en:"Grand Canal, Venice", place:"意大利 · 威尼斯", lat:45.437, lon:12.335, yt:"r8N6IsoIkTk", tz:"Europe/Rome", cat:"水乡", icon:"🛶", desc:"I Love You Venice 的 4K 机位，从 Povoledo 餐厅露台看大运河，贡多拉和水上巴士来来往往。"},
+  {name:"伦敦 · 修道院路斑马线", en:"Abbey Road Crossing", place:"英国 · 伦敦", lat:51.532, lon:-0.177, yt:"zMCea32gpmg", tz:"Europe/London", cat:"城市", icon:"🎸", desc:"披头士《Abbey Road》封面那条斑马线，EarthCam 机位。全天都有游客摆同款姿势拍照。"},
+  {name:"夏威夷 · 冒纳凯阿星空", en:"Mauna Kea StarCam", place:"美国 · 夏威夷", lat:19.826, lon:-155.471, yt:"Q3UhCgsWDw8", tz:"Pacific/Honolulu", cat:"星空", icon:"🔭", desc:"CFHT 天文台的 4K 星空相机，海拔 4200 米。白天看云海和望远镜圆顶，夜里银河、流星全靠它，马来西亚晚上正好是它那边夜里。"},
+  {name:"基拉韦厄火山", en:"Kilauea Volcano", place:"美国 · 夏威夷", lat:19.406, lon:-155.283, yt:"gXKuUyKt8mc", tz:"Pacific/Honolulu", cat:"自然", icon:"🌋", desc:"USGS 的火山口机位。喷发期能看到熔岩，平时是火山口和蒸汽。"},
+  {name:"纽约 · 时代广场", en:"Times Square", place:"美国 · 纽约", lat:40.758, lon:-73.9855, yt:"JQ_jwk_7OVE", tz:"America/New_York", cat:"城市", icon:"🗽", desc:"EarthCam 的时代广场 4K 机位，广告屏和人流 24 小时不停。马来西亚中午打开，正好是纽约的午夜霓虹。"},
+  {name:"纳米布沙漠水坑", en:"Namib Desert Waterhole", place:"纳米比亚 · 纳米布", lat:-24.65, lon:15.85, yt:"ydYDqZQpim8", tz:"Africa/Windhoek", cat:"野生动物", icon:"🦒", desc:"NamibiaCam 的招牌机位，红沙漠边一个太阳能水坑。剑羚、斑马、长颈鹿轮流来喝水，夜里有夜视，豹子偶尔出镜。最值得挂着等的一个。"},
+  {name:"埃托沙水坑", en:"Okaukuejo Waterhole, Etosha", place:"纳米比亚 · 埃托沙国家公园", lat:-19.178, lon:15.918, yt:"AeMUdOPFcXI", tz:"Africa/Windhoek", cat:"野生动物", icon:"🐘", desc:"埃托沙最有名的水坑，夜里有泛光灯。大象、犀牛、狮子都是夜班常客。"},
+  {name:"津巴布韦水坑", en:"The Hide Waterhole, Hwange", place:"津巴布韦 · 万盖国家公园", lat:-18.63, lon:26.98, yt:"nXI-kWu6BLo", tz:"Africa/Harare", cat:"野生动物", icon:"🦛", desc:"Africam 的机位，一只叫 Moto Moto 的河马常驻，下午大象群会整队过来。"},
+  {name:"中途岛信天翁", en:"Midway Atoll", place:"太平洋 · 中途岛", lat:28.2, lon:-177.38, yt:"L3iKvwoXZ38", tz:"Pacific/Midway", cat:"野生动物", icon:"🐦", desc:"地球上最偏远的直播之一，在太平洋正中间的环礁上，看信天翁繁殖地和整片太平洋。"},
+  {name:"国际空间站", en:"ISS Live", place:"近地轨道 · 400km 高", lat:0, lon:0, yt:"fO9e9jnhYK8", tz:"UTC", cat:"太空", icon:"🛰️", desc:"Sen 装在空间站上的 4K 相机看地球，90 分钟绕一圈，一天 16 次日出日落；飞到夜面时画面会黑一阵，是正常现象。这个不是固定地点，所以没有打在地球上，从列表打开。", iss:true},
+  {name:"NASA 电视台", en:"NASA TV", place:"美国 · 佛罗里达 · 肯尼迪航天中心一带", lat:28.57, lon:-80.65, type:"hls", src:"https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8", page:"https://www.nasa.gov/live/", tz:"America/New_York", cat:"太空", icon:"📡", desc:"NASA 官方直播频道的直连流（Akamai），不经过 YouTube：火箭发射、空间站活动、任务直播都走这条。平时是节目轮播，有发射任务时是现场。"},
+  {name:"基韦斯特海滩", en:"Key West Beach TV", place:"美国 · 佛罗里达 · 基韦斯特", lat:24.555, lon:-81.78, type:"hls", src:"https://5ed325193d4e1.streamlock.net:444/LiveTV/KTVHD/playlist.m3u8", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"美国本土最南端小岛的海滩电视频道直连流，轮播当地海滩、码头和日落画面，不经过 YouTube。"},
+  {name:"佛罗里达 30A 海岸", en:"30A Beach, Florida", place:"美国 · 佛罗里达 · 德斯坦一带", lat:30.35, lon:-86.16, type:"hls", src:"https://30a-tv.com/beachy.m3u8", tz:"America/Chicago", cat:"水乡", icon:"🌊", desc:"佛罗里达翡翠海岸（30A 公路沿线）的本地海滩频道直连流，白沙滩和墨绿海水是这一带的招牌。"},
+  {name:"黄石 · 猛犸温泉", en:"Mammoth Hot Springs, Yellowstone", place:"美国 · 黄石国家公园", lat:44.97, lon:-110.70, type:"img", src:"https://www.nps.gov/webcams-yell/mammoth_parade.jpg", page:"https://www.nps.gov/yell/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"♨️", desc:"国家公园管理局（NPS）官方快照机位：石灰华梯田温泉和大草坪。不是视频，是约每分钟自动换一张的实时照片。"},
+  {name:"黄石 · 沃什伯恩山", en:"Mount Washburn, Yellowstone", place:"美国 · 黄石国家公园", lat:44.80, lon:-110.45, type:"img", src:"https://www.nps.gov/webcams-yell/washburn_ne.jpg", page:"https://www.nps.gov/yell/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"⛰️", desc:"海拔 3122 米山顶的 NPS 官方快照，朝东北俯瞰黄石大峡谷方向，晴天视野极远。同样是自动刷新的实时照片。"},
+  {name:"优胜美地山谷", en:"Yosemite Valley", place:"美国 · 加州 · 优胜美地", lat:37.73, lon:-119.58, type:"img", src:"https://www.nps.gov/featurecontent/ard/webcams/images/yoselarge.jpg", page:"https://www.nps.gov/yose/learn/photosmultimedia/webcams.htm", refresh:120, tz:"America/Los_Angeles", cat:"自然", icon:"🪨", desc:"NPS 官方高清快照（大图约 3MB，加载稍慢），花岗岩大山谷和酋长岩。每两分钟自动换一张。"},
+  {name:"大峡谷南缘", en:"Grand Canyon South Rim", place:"美国 · 亚利桑那 · 大峡谷", lat:36.06, lon:-112.11, type:"img", src:"https://www.nps.gov/webcams-grca/camera.jpg", page:"https://www.nps.gov/grca/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Phoenix", cat:"自然", icon:"🏜️", desc:"NPS 官方快照机位，从南缘看大峡谷，光影随太阳变，下午到日落最壮观。约每分钟自动换一张。"},
+  {name:"雷尼尔雪山", en:"Mount Rainier", place:"美国 · 华盛顿州 · 雷尼尔国家公园", lat:46.85, lon:-121.76, type:"img", src:"https://www.nps.gov/webcams-mora/mountain.jpg", page:"https://www.nps.gov/mora/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Los_Angeles", cat:"自然", icon:"🏔️", desc:"NPS 官方快照，从 Paradise 一带看 4392 米的雷尼尔大雪山本体。华盛顿州天气多变，抓到晴天就是大片。"},
+  {name:"冰川公园 · 麦克唐纳湖", en:"Lake McDonald, Glacier NP", place:"美国 · 蒙大拿 · 冰川国家公园", lat:48.41, lon:-113.99, type:"img", src:"https://www.nps.gov/webcams-glac/LakeMcDonald1.jpg", page:"https://www.nps.gov/glac/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"🏞️", desc:"NPS 官方快照，冰川公园最大的湖，湖面倒映对岸雪山，清晨最平静。"},
+  {name:"锡安峡谷", en:"Zion Canyon", place:"美国 · 犹他 · 锡安国家公园", lat:37.30, lon:-113.03, type:"img", src:"https://www.nps.gov/webcams-zion/camera2.jpg", page:"https://www.nps.gov/zion/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"🪵", desc:"NPS 官方快照，红色砂岩大峡谷，阳光打在岩壁上的颜色从橙到紫一直在变。"},
+  {name:"新加坡 · 港湾快照", en:"Singapore Harbourfront Cam", place:"新加坡 · 港湾区", lat:1.26, lon:103.82, type:"sgapi", camId:"4799", api:"https://api.data.gov.sg/v1/transport/traffic-images", page:"https://onemotoring.lta.gov.sg/content/onemotoring/home/driving/traffic_information/traffic_cameras.html", refresh:60, tz:"Asia/Singapore", cat:"城市", icon:"🇸🇬", desc:"新加坡陆交局（LTA）官方开放数据的实时快照，港湾/圣淘沙门户一带。政府开放 API，每分钟自动取最新一张。"},
+  {name:"布鲁克斯瀑布棕熊", en:"Brooks Falls Brown Bears", place:"美国 · 阿拉斯加 · 卡特迈国家公园", lat:58.55, lon:-155.78, yt:"J7ZrIDvqlic", tz:"America/Anchorage", cat:"野生动物", icon:"🐻", desc:"explore.org 的招牌机位：棕熊站在瀑布顶上张嘴接跳上来的鲑鱼。鲑鱼季（6 月底到 10 月）最热闹，冬天熊冬眠就只剩瀑布。"},
+];
+
+const CATS = {"城市":"#ff9f43","水乡":"#54c8ff","自然":"#7bed6d","野生动物":"#ffd32a","星空":"#b39dff","太空":"#ff7eb6"};
+const map = new maplibregl.Map({
+  container:"map",
+  style:{version:8,
+    sources:{sat:{type:"raster",tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],tileSize:256,attribution:"Esri World Imagery"}},
+    layers:[{id:"sat",type:"raster",source:"sat",paint:{"raster-brightness-max":0.82}}],
+    sky:{"sky-color":"#081426","horizon-color":"#274a77","fog-color":"#04070d","sky-horizon-blend":0.6,"horizon-fog-blend":0.6,"fog-ground-blend":0.4}},
+  center:[105,18], zoom:2.1, attributionControl:{compact:true}
+});
+map.on("load",()=>{
+  map.setProjection({type:"globe"});
+  /* 点直接画进地球表面（GL 图层）：跟着球面走、转到背面会被遮住，不再是浮在屏幕上的贴纸 */
+  const feats=CAMS.filter(c=>!c.iss).map(c=>({type:"Feature",geometry:{type:"Point",coordinates:[c.lon,c.lat]},properties:{name:c.name,place:c.place,color:CATS[c.cat]||"#ffffff"}}));
+  map.addSource("cams",{type:"geojson",data:{type:"FeatureCollection",features:feats}});
+  map.addLayer({id:"cam-halo",type:"circle",source:"cams",paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,11,4,17],"circle-color":["get","color"],"circle-opacity":0.35,"circle-blur":0.6}});
+  map.addLayer({id:"cam-sel",type:"circle",source:"cams",filter:["==",["get","name"],"__none__"],paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,13,4,20],"circle-color":"rgba(0,0,0,0)","circle-stroke-color":"#ffffff","circle-stroke-width":2.5}});
+  map.addLayer({id:"cam-core",type:"circle",source:"cams",paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,5.5,4,8.5],"circle-color":["get","color"],"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":0.95}});
+  const tip=document.getElementById("tip");
+  map.on("mousemove","cam-core",e=>{ map.getCanvas().style.cursor="pointer"; const f=e.features[0]; tip.style.display="block"; tip.style.left=(e.point.x+14)+"px"; tip.style.top=(e.point.y+10)+"px"; tip.textContent=f.properties.name+" · "+f.properties.place; });
+  map.on("mouseleave","cam-core",()=>{ map.getCanvas().style.cursor=""; tip.style.display="none"; });
+  const pick=e=>{ const f=(e.features||[])[0]; if(!f) return; const cam=CAMS.find(c=>c.name===f.properties.name); if(cam){ lastTouch=Date.now(); openCam(cam,false); } };
+  map.on("click","cam-core",pick); map.on("click","cam-halo",pick);
+  /* 背面剔除：MapLibre 的球面投影会把背面坐标镜像投进圆盘里，必须按「地平线角」动态过滤，
+     只喂给图层当前这一面看得到的点。地平线角用采样投影实测，任意缩放都自动校准。 */
+  const ALLFEATS=feats;
+  let cullQueued=false;
+  function destPt(lng,lat,brg,dist){ const d=dist*Math.PI/180, b=brg*Math.PI/180, f1=lat*Math.PI/180, l1=lng*Math.PI/180;
+    const f2=Math.asin(Math.sin(f1)*Math.cos(d)+Math.cos(f1)*Math.sin(d)*Math.cos(b));
+    const l2=l1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(f1), Math.cos(d)-Math.sin(f1)*Math.sin(f2));
+    return [l2*180/Math.PI, f2*180/Math.PI]; }
+  function measureHorizon(){ const c=map.getCenter(); const cpx=map.project(c); let ba=90, bd=-1;
+    for(let a=10;a<=170;a+=5){ const px=map.project(destPt(c.lng,c.lat,90,a)); const d=Math.hypot(px.x-cpx.x,px.y-cpx.y); if(d>bd){ bd=d; ba=a; } }
+    for(let a=Math.max(5,ba-5);a<=Math.min(175,ba+5);a+=1){ const px=map.project(destPt(c.lng,c.lat,90,a)); const d=Math.hypot(px.x-cpx.x,px.y-cpx.y); if(d>bd){ bd=d; ba=a; } }
+    return ba; }
+  function centralAngle(c,lon,lat){ const f1=c.lat*Math.PI/180, f2=lat*Math.PI/180, dl=(lon-c.lng)*Math.PI/180;
+    const x=Math.sin(f1)*Math.sin(f2)+Math.cos(f1)*Math.cos(f2)*Math.cos(dl); return Math.acos(Math.max(-1,Math.min(1,x)))*180/Math.PI; }
+  function applyCull(){ const h=measureHorizon(); window.__horizon=h; const c=map.getCenter(); const lim=h-0.4;
+    const vis=ALLFEATS.filter(f=>centralAngle(c,f.geometry.coordinates[0],f.geometry.coordinates[1])<=lim);
+    window.__fedNames=vis.map(f=>f.properties.name);
+    const src=map.getSource("cams"); if(src) src.setData({type:"FeatureCollection",features:vis});
+    if(window.__pinCam && window.__pinEl){ window.__pinEl.style.display = centralAngle(c,window.__pinCam.lon,window.__pinCam.lat)<=lim ? "" : "none"; } }
+  map.on("move",()=>{ if(!cullQueued){ cullQueued=true; requestAnimationFrame(()=>{ cullQueued=false; applyCull(); }); } });
+  applyCull();
+});
+
+/* 自转：空闲时慢慢转，有人操作就停 */
+let spinning=true, lastTouch=Date.now();
+function spin(){ if(spinning && Date.now()-lastTouch>2500 && !player.classList.contains("open")){ const c=map.getCenter(); c.lng+=0.045; map.jumpTo({center:c}); } requestAnimationFrame(spin); }
+["mousedown","touchstart","wheel"].forEach(e=>map.on(e,()=>{ lastTouch=Date.now(); }));
+document.getElementById("spinBtn").onclick=e=>{ spinning=!spinning; e.target.textContent = spinning?"⏸ 暂停自转":"▶ 继续自转"; };
+
+const player=document.getElementById("player"), frame=document.getElementById("frame"), vempty=document.getElementById("vempty");
+const vid=document.getElementById("vid"), snap=document.getElementById("snap");
+let current=null, clockTimer=null, hls=null, snapTimer=null;
+
+function camType(cam){ return cam.type || (cam.yt||cam.channel ? "yt" : ""); }
+function embedUrl(cam){
+  if(cam.yt) return "https://www.youtube.com/embed/"+cam.yt+"?autoplay=1&mute=1&rel=0&playsinline=1";
+  if(cam.channel) return "https://www.youtube.com/embed/live_stream?channel="+cam.channel+"&autoplay=1&mute=1&rel=0";
+  return "";
+}
+function stopMedia(){
+  if(hls){ try{hls.destroy();}catch(e){} hls=null; }
+  clearInterval(snapTimer); snapTimer=null;
+  try{ vid.pause(); vid.removeAttribute("src"); vid.load(); }catch(e){}
+  frame.removeAttribute("src");
+  frame.style.display="none"; vid.style.display="none"; snap.style.display="none";
+}
+function localTime(tz){ try{ return new Intl.DateTimeFormat("zh-CN",{timeZone:tz,hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false,weekday:"short"}).format(new Date()); }catch(e){ return ""; } }
+
+let selPin=null;
+function markSelected(cam){
+  if(selPin){ selPin.remove(); selPin=null; }
+  try{ map.setFilter("cam-sel",["==",["get","name"],cam.iss?"__none__":cam.name]); }catch(e){}
+  if(!cam.iss){
+    const el=document.createElement("div"); el.className="sel-pin"; el.textContent="📍";
+    selPin=new maplibregl.Marker({element:el,anchor:"bottom"}).setLngLat([cam.lon,cam.lat]).addTo(map);
+    window.__pinCam=cam; window.__pinEl=el;
+  } else { window.__pinCam=null; window.__pinEl=null; }
+}
+function openCam(cam, fly=true){
+  current=cam; stopMedia(); markSelected(cam);
+  document.querySelectorAll("#list .item").forEach(el=>el.classList.toggle("active", el.dataset.name===cam.name));
+  const t=camType(cam);
+  const badge = t==="hls" ? '<span class="livebadge hls">📡 直连直播</span>' : (t==="img"||t==="sgapi") ? '<span class="livebadge img">📷 官方快照</span>' : '<span class="livebadge">LIVE</span>';
+  document.getElementById("pTitle").innerHTML = badge+cam.name;
+  document.getElementById("pDesc").textContent = cam.desc||"";
+  const tick=()=>{ document.getElementById("pSub").textContent = cam.place+" · "+cam.en+" · 当地时间 "+localTime(cam.tz); };
+  tick(); clearInterval(clockTimer); clockTimer=setInterval(tick,1000);
+  vempty.style.display="none";
+  if(t==="yt"){
+    const url=embedUrl(cam);
+    if(url){ frame.style.display="block"; frame.src=url; }
+    else { vempty.style.display="flex"; vempty.textContent="这个点暂时没有稳定的直播源"; }
+  } else if(t==="hls"){
+    vid.style.display="block";
+    if(window.Hls && Hls.isSupported()){ hls=new Hls({liveSyncDurationCount:3}); hls.loadSource(cam.src); hls.attachMedia(vid); hls.on(Hls.Events.MANIFEST_PARSED,()=>{ vid.play().catch(()=>{}); }); }
+    else if(vid.canPlayType("application/vnd.apple.mpegurl")){ vid.src=cam.src; vid.play().catch(()=>{}); }
+    else { vempty.style.display="flex"; vempty.textContent="这个浏览器不支持直连流播放，点下面按钮去源站看"; }
+  } else if(t==="img"||t==="sgapi"){
+    snap.style.display="block";
+    const load=()=>{
+      if(t==="sgapi"){
+        fetch(cam.api).then(r=>r.json()).then(d=>{ const c=(d.items[0].cameras||[]).find(x=>x.camera_id===cam.camId); if(c) snap.src=c.image; }).catch(()=>{});
+      } else { snap.src=cam.src+(cam.src.includes("?")?"&":"?")+"t="+Date.now(); }
+    };
+    load(); snapTimer=setInterval(load,(cam.refresh||60)*1000);
+  }
+  const srcBtn=document.getElementById("openSrc");
+  if(t==="yt"){ srcBtn.style.display=""; srcBtn.textContent="▶ 在 YouTube 打开"; srcBtn.onclick=()=>window.open(cam.yt?("https://www.youtube.com/watch?v="+cam.yt):("https://www.youtube.com/results?search_query="+encodeURIComponent(cam.en+" live cam")),"_blank"); }
+  else if(cam.page){ srcBtn.style.display=""; srcBtn.textContent="▶ 在源站打开"; srcBtn.onclick=()=>window.open(cam.page,"_blank"); }
+  else { srcBtn.style.display="none"; }
+  player.classList.add("open");
+  if(fly && !cam.iss) map.flyTo({center:[cam.lon,cam.lat], zoom:Math.max(map.getZoom(),3.4), speed:0.9, curve:1.4, essential:true});
+}
+document.getElementById("close").onclick=()=>{ player.classList.remove("open"); stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
+document.getElementById("nextBtn").onclick=()=>randomCam();
+document.getElementById("randomBtn").onclick=()=>randomCam();
+function randomCam(){ const pool=CAMS.filter(c=>!c.disabled); openCam(pool[Math.floor(Math.random()*pool.length)]); }
+
+/* 左侧列表（地图上的点在 map load 里以 GL 图层画出，贴在球面上） */
+const list=document.getElementById("list");
+list.innerHTML='<div class="hd">全部机位 · '+CAMS.filter(c=>!c.disabled).length+' 个</div>';
+CAMS.forEach(cam=>{
+  if(cam.iss){
+    const b=document.createElement("button"); b.className="item"; b.dataset.name=cam.name;
+    b.innerHTML="<b>🛰️ 国际空间站</b><span>轨道直播 · 不在地球表面</span>";
+    b.onclick=()=>openCam(cam,false); list.appendChild(b); return;
+  }
+  if(!cam.disabled){
+    const b=document.createElement("button"); b.className="item"; b.dataset.name=cam.name;
+    const tt=camType(cam);
+    const srcLabel = tt==="hls" ? ' · <span class="src">📡直连</span>' : (tt==="img"||tt==="sgapi") ? ' · <span class="src">📷快照</span>' : ' · YouTube';
+    b.innerHTML="<b>"+cam.icon+" "+cam.name+"</b><span>"+cam.place+" · "+cam.cat+srcLabel+"</span>";
+    b.onclick=()=>openCam(cam); list.appendChild(b);
+  }
+});
+requestAnimationFrame(spin);
+</script>
+</body>
+</html>
