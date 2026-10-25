@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- YouTube 内嵌播放器要求发送 Referer，否则报 Error 153 (embedder.identity.missing.referrer) -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>直播地球 · 世界风景直播</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
@@ -143,7 +145,7 @@ const CAMS = [
   {name:"Gaisberg Paragliding Launch, Salzburg", en:"Gaisberg Paragliding Launch, Salzburg", place:"奥地利 · Salzburg", lat:47.798, lon:13.046, yt:"uZV_CZCAf8g", tz:"Europe/Vienna", cat:"星空", icon:"✨", desc:"星空与极光实况"},
   {name:"Dublin Bay", en:"Dublin Bay", place:"爱尔兰 · Dublin", lat:53.349, lon:-6.261, yt:"oxx7MqjhOpw", tz:"Europe/Dublin", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
   {name:"Sydney Harbour", en:"Sydney Harbour", place:"澳大利亚 · Sydney", lat:-33.87, lon:151.208, yt:"5uZa3-RMFos", tz:"Australia/Sydney", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Laranjeiras Beach, Balneário Camboriú", en:"Laranjeiras Beach, Balneário Camboriú", place:"巴西 · Balneario Camboriu", lat:-27.008, lon:-48.614, yt:"1HjA1crLMyU", tz:"America/Sao_Paulo", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Balneário Camboriú 海滨大道", en:"Avenida Atlântica, Balneário Camboriú", place:"巴西 · 圣卡塔琳娜 · 巴拉内阿里乌坎博里乌", lat:-26.991, lon:-48.634, yt:"5Xl6pSgiy3A", tz:"America/Sao_Paulo", cat:"水乡", icon:"🏖️", desc:"巴西“小迪拜”的海滨大道机位，一边是玻璃幕墙高楼群，一边是大西洋沙滩，日落时整条海岸线反光。"},
   {name:"Tallinn Old Town", en:"Tallinn Old Town", place:"爱沙尼亚 · Tallinn", lat:59.437, lon:24.757, yt:"VhVgZi2lGv0", tz:"Europe/Tallinn", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
   {name:"Milan Skyline", en:"Milan Skyline", place:"意大利 · Milan", lat:45.464, lon:9.19, yt:"dsoM6TYIkOI", tz:"Europe/Rome", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
   {name:"Bergamo Skyline", en:"Bergamo Skyline", place:"意大利 · Bergamo", lat:45.757, lon:9.754, yt:"fXiekt4_Ulo", tz:"Europe/Rome", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
@@ -189,16 +191,16 @@ const CAMS = [
   {name:"象山俯瞰台北 101", en:"Elephant Mountain, Taipei", place:"中国 · 台北", lat:25.033, lon:121.570, yt:"z_fY1pj1VBw", tz:"Asia/Taipei", cat:"城市", icon:"🏙️", desc:"台北观光即时影像，从象山顶看 101 大楼和台北盆地，傍晚到夜景是最经典的机位。"},
   {name:"首尔 · 汉江", en:"Han River, Seoul", place:"韩国 · 首尔", lat:37.530, lon:126.940, yt:"vk5BHoDxXf0", tz:"Asia/Seoul", cat:"城市", icon:"🌉", desc:"汝矣岛一带的汉江 4K 机位，江面、大桥和首尔天际线一起入镜，晚上有整条江的夜景灯光。"},
   {name:"滨海湾天际线", en:"Marina Bay, Singapore", place:"新加坡 · 滨海湾", lat:1.283, lon:103.860, yt:"y2P7ZERGcb0", tz:"Asia/Singapore", cat:"城市", icon:"🏙️", desc:"滨海湾天际线实况，顺带实时 PSI 空气指标。金沙、莲花和摩天轮都在一个画面里。"},
-  {name:"吉隆坡天际线", en:"KL Skyline", place:"马来西亚 · 吉隆坡", lat:3.157, lon:101.712, yt:"_1tcOO0CKsM", tz:"Asia/Kuala_Lumpur", cat:"城市", icon:"🇲🇾", desc:"吉隆坡市区天际线机位，配 lofi 音乐。双子塔在画面里，马来西亚晚上打开正好是它的白天。"},
+  {name:"吉隆坡天际线", en:"KL Skyline", place:"马来西亚 · 吉隆坡", lat:3.157, lon:101.712, yt:"_1tcOO0CKsM", noembed:true, tz:"Asia/Kuala_Lumpur", cat:"城市", icon:"🇲🇾", desc:"吉隆坡市区天际线机位，配 lofi 音乐。双子塔在画面里，马来西亚晚上打开正好是它的白天。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
   {name:"曼谷 · 素坤逸路", en:"Sukhumvit Road, Bangkok", place:"泰国 · 曼谷", lat:13.740, lon:100.562, yt:"UemFRPrl1hk", tz:"Asia/Bangkok", cat:"城市", icon:"🛺", desc:"素坤逸 Soi 11 的 4K 街景机位，摩托车、路边摊和天铁道口，曼谷最忙的一条街。"},
   {name:"雷克雅未克市区", en:"Reykjavik City", place:"冰岛 · 雷克雅未克", lat:64.147, lon:-21.940, yt:"tYgGEC-ESTw", tz:"Atlantic/Reykjavik", cat:"城市", icon:"🇮🇸", desc:"世界最北首都的市区实况，彩色房子、教堂和远处的海。天气说变就变，晴天的雷克雅未克很美。"},
   {name:"多伦多 · CN 塔", en:"CN Tower, Toronto", place:"加拿大 · 多伦多", lat:43.643, lon:-79.387, yt:"bbjwotvAvDM", tz:"America/Toronto", cat:"城市", icon:"🇨🇦", desc:"CN 塔和安大略湖的 4K 机位，配 lofi。湖面起雾起浪的时候最有加拿大冬天的感觉。"},
   {name:"水坝广场", en:"Dam Square, Amsterdam", place:"荷兰 · 阿姆斯特丹", lat:52.373, lon:4.893, yt:"Gd9d4q6WvUY", tz:"Europe/Amsterdam", cat:"城市", icon:"🇳🇱", desc:"阿姆斯特丹市中心 Dam 广场的 4K 云台机位，王宫、纪念碑和全天候的人流。"},
-  {name:"涅瓦大街", en:"Nevsky Prospect, St. Petersburg", place:"俄罗斯 · 圣彼得堡", lat:59.935, lon:30.335, yt:"fUsJZTHeZn4", tz:"Europe/Moscow", cat:"城市", icon:"🏛️", desc:"圣彼得堡涅瓦大街 Anichkov 宫一带的街景实况，欧式建筑立面和人行道，很有旧俄都城的气质。"},
+  {name:"涅瓦大街", en:"Nevsky Prospect, St. Petersburg", place:"俄罗斯 · 圣彼得堡", lat:59.935, lon:30.335, yt:"w_Dg2vC0tUE", tz:"Europe/Moscow", cat:"城市", icon:"🏛️", desc:"圣彼得堡涅瓦大街的街景实况，欧式建筑立面、电车轨道和人行道，很有旧俄都城的气质。"},
   {name:"都柏林市区", en:"Dublin City", place:"爱尔兰 · 都柏林", lat:53.344, lon:-6.267, yt:"3nyPER2kzqk", tz:"Europe/Dublin", cat:"城市", icon:"🇮🇪", desc:"EarthCam 的都柏林市中心机位，街道、店铺和行人，配上爱尔兰说变就变的天气。"},
   {name:"布莱恩特公园", en:"Bryant Park, New York", place:"美国 · 纽约", lat:40.754, lon:-73.983, yt:"QIIVxUJzJQw", tz:"America/New_York", cat:"城市", icon:"🌳", desc:"时代广场旁边的布莱恩特公园，纽约公共图书馆门口。冬天是溜冰场，夏天全是躺椅。"},
   {name:"自由女神像", en:"Statue of Liberty", place:"美国 · 纽约", lat:40.689, lon:-74.044, yt:"o5Ie_LpZ9uk", tz:"America/New_York", cat:"城市", icon:"🗽", desc:"EarthCam 的自由女神像机位，看雕像和纽约港，邮轮进出港都是背景板。"},
-  {name:"金门大桥", en:"Golden Gate Bridge", place:"美国 · 旧金山", lat:37.820, lon:-122.478, yt:"MQEu33EtfbI", tz:"America/Los_Angeles", cat:"城市", icon:"🌉", desc:"金门大桥正面机位，旧金山标志性画面。雾来了大桥只露出桥顶，是这一带的日常。"},
+  {name:"金门大桥", en:"Golden Gate Bridge", place:"美国 · 旧金山", lat:37.820, lon:-122.478, yt:"BSWhGNXxT9A", tz:"America/Los_Angeles", cat:"城市", icon:"🌉", desc:"旧金山湾北岸机位，金门大桥和城市天际线同框。雾来了大桥只露出桥顶，是这一带的日常。"},
   {name:"马霍海滩", en:"Maho Beach, Sint Maarten", place:"荷属圣马丁 · 马霍", lat:18.045, lon:-63.071, yt:"2IQmpCXbOmM", tz:"America/Lower_Princes", cat:"城市", icon:"✈️", desc:"朱莉安娜公主机场尽头的海滩，航班进场超低空掠过人群头顶，全世界最有名的拍飞机机位。"},
   {name:"基韦斯特 · 杜瓦尔街", en:"Duval Street, Key West", place:"美国 · 佛罗里达 · 基韦斯特", lat:24.559, lon:-81.807, yt:"H_kswlYZN5o", tz:"America/New_York", cat:"城市", icon:"🎷", desc:"美国本土最南端城市的主街，酒吧、巡游车队和全天候的游客，海明威的故乡。"},
   {name:"威廉斯塔德彩色河岸", en:"Handelskade, Willemstad", place:"库拉索 · 威廉斯塔德", lat:12.104, lon:-68.935, yt:"28U-t3fA9ks", tz:"America/Curacao", cat:"水乡", icon:"🏝️", desc:"世界遗产级的彩色河岸街景，荷兰殖民风格的糖果色房子一字排开，加勒比最上镜的一条街。"},
@@ -208,14 +210,15 @@ const CAMS = [
   {name:"大港船政", en:"Grand Harbour, Malta", place:"马耳他 · 瓦莱塔", lat:35.898, lon:14.513, yt:"sQiZby6_rsE", tz:"Europe/Malta", cat:"水乡", icon:"🚢", desc:"瓦莱塔大港的 4K 船政机位，白天数邮轮和货轮，晚上变成安静的港口夜景。"},
   {name:"苏梅岛 · Crystal Bay", en:"Crystal Bay, Koh Samui", place:"泰国 · 苏梅岛", lat:9.440, lon:100.060, yt:"Fw9hgttWzIg", tz:"Asia/Bangkok", cat:"水乡", icon:"🏖️", desc:"苏梅岛拉迈海滩的 4K 机位，椰林、白沙和海湾，一派热带海岛日常。"},
   {name:"Lake Hood 水上飞机基地", en:"Lake Hood Seaplane Base", place:"美国 · 阿拉斯加 · 安克雷奇", lat:61.221, lon:-149.972, yt:"61pi8UjLOlo", tz:"America/Anchorage", cat:"水乡", icon:"🛩️", desc:"世界上最忙的水上飞机基地，螺旋桨飞机不停起降，背后是阿拉斯加的雪山。"},
-  {name:"圣伊夫港", en:"St Ives Harbour", place:"英国 · 康沃尔 · 圣伊夫", lat:50.211, lon:-5.480, yt:"T83mKGf_c3k", tz:"Europe/London", cat:"水乡", icon:"⚓", desc:"康沃尔海岸的艺术小镇渔港，渔船、防波堤和海鸥，英国夏天的海边就该是这样。"},
+  {name:"圣伊夫港", en:"St Ives Harbour", place:"英国 · 康沃尔 · 圣伊夫", lat:50.211, lon:-5.480, yt:"Iu5zg5iqVmw", tz:"Europe/London", cat:"水乡", icon:"⚓", desc:"康沃尔海岸的艺术小镇渔港，渔船、防波堤和海鸥，潮水退了会露出整片沙滩，英国夏天的海边就该是这样。"},
   {name:"富士山 · 河口湖", en:"Mount Fuji from Lake Kawaguchi", place:"日本 · 山梨 · 河口湖", lat:35.517, lon:138.753, yt:"bdUbACCWmoY", tz:"Asia/Tokyo", cat:"自然", icon:"🗻", desc:"从大石公园看富士山，逆富士就出自这一带。晴天率最高的富士山机位之一，清晨湖面最平。"},
   {name:"尼亚加拉大瀑布", en:"Niagara Falls", place:"美国 / 加拿大 · 尼亚加拉", lat:43.083, lon:-79.074, yt:"7gBzLGlJnwk", tz:"America/New_York", cat:"自然", icon:"🌊", desc:"马蹄瀑布正面机位，水汽常年不散。夜里两岸打灯，是另一套完全不同的颜色。"},
   {name:"埃特纳火山", en:"Mount Etna", place:"意大利 · 西西里 · 埃特纳", lat:37.755, lon:14.995, yt:"EGk3Mr0OshE", tz:"Europe/Rome", cat:"自然", icon:"🌋", desc:"欧洲最活跃的火山，多机位轮换。喷发期能看到火山口喷烟柱，山顶常年积雪对比很强。"},
   {name:"马荣火山", en:"Mayon Volcano", place:"菲律宾 · 阿尔拜", lat:13.256, lon:123.685, yt:"UDAZWxehMAI", tz:"Asia/Manila", cat:"自然", icon:"🌋", desc:"世界上最完美的圆锥火山，目前正在活动。夜空里火山口泛红光的时候最震撼。"},
   {name:"富埃戈火山", en:"Fuego Volcano", place:"危地马拉 · 富埃戈", lat:14.475, lon:-90.880, yt:"cNW2nytVkfs", tz:"America/Guatemala", cat:"自然", icon:"🌋", desc:"几乎天天在喷的火山，火山灰柱和熔岩流是日常。夜里看喷发最清楚。"},
-  {name:"珠峰 · Hotel Everest View", en:"Everest Panorama, Nepal", place:"尼泊尔 · 索卢昆布 · 海拔 3880 米", lat:27.810, lon:86.710, yt:"AD4-Z-ONsIc", tz:"Asia/Kathmandu", cat:"自然", icon:"🏔️", desc:"海拔 3880 米的酒店机位，正对珠峰和昆布里峰。云开会看到山体，夜里是喜马拉雅星空。"},
-  {name:"卢卡拉机场", en:"Lukla Airport", place:"尼泊尔 · 索卢昆布 · 卢卡拉", lat:27.686, lon:86.729, yt:"am9KDRSZQ-0", tz:"Asia/Kathmandu", cat:"自然", icon:"🛫", desc:"世界最危险的机场之一，去珠峰大本营的必经之门。短距起降的小飞机一头扎进喜马拉雅。"},
+  {name:"珠峰 · Hotel Everest View", en:"Everest Panorama, Nepal", place:"尼泊尔 · 索卢昆布 · 海拔 3880 米", lat:27.810, lon:86.710, yt:"EGya8tERDnY", tz:"Asia/Kathmandu", cat:"自然", icon:"🏔️", desc:"海拔 3880 米酒店的全天空机位，白天对着珠峰和昆布里峰的雪壁，夜里换成喜马拉雅星空，云一散就是整片山脊。"},
+  {name:"南崎巴札", en:"Namche Bazaar, Nepal", place:"尼泊尔 · 索卢昆布 · 海拔 3440 米", lat:27.804, lon:86.710, yt:"wguWmJnOly8", tz:"Asia/Kathmandu", cat:"自然", icon:"🏘️", desc:"珠峰线路上的补给重镇，房子层层叠在山坡上，背后就是 Kongde 和 Thamserku 的雪壁。这个机位可以直接在网页里播。"},
+  {name:"卢卡拉机场", en:"Lukla Airport", place:"尼泊尔 · 索卢昆布 · 卢卡拉", lat:27.686, lon:86.729, yt:"am9KDRSZQ-0", noembed:true, tz:"Asia/Kathmandu", cat:"自然", icon:"🛫", desc:"世界最危险的机场之一，去珠峰大本营的必经之门。短距起降的小飞机一头扎进喜马拉雅。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
   {name:"艾格峰三山", en:"Eiger, Mönch & Jungfrau", place:"瑞士 · 贝阿滕贝格", lat:46.700, lon:7.800, yt:"UcfudevG7v8", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"从贝阿滕贝格木屋看艾格、僧侣峰和少女峰三连峰，加上图恩湖。瑞士明信片机位。"},
   {name:"格林德茨山村", en:"Grimentz, Valais", place:"瑞士 · 瓦莱州 · 格林德茨", lat:46.183, lon:7.583, yt:"iCxfe27HpaY", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"瓦莱州山村的机位，木屋、教堂和背后的阿尔卑斯山坡，冬天雪景夏天草甸。"},
   {name:"门登霍尔冰川", en:"Mendenhall Glacier", place:"美国 · 阿拉斯加 · 朱诺", lat:58.440, lon:-134.570, yt:"jJI5w_RVGtQ", tz:"America/Anchorage", cat:"自然", icon:"🏔️", desc:"朱诺郊外的冰川机位，冰川舌和山坡，还会有野山羊路过。冰川这些年退得很明显。"},
@@ -296,6 +299,21 @@ const player=document.getElementById("player"), frame=document.getElementById("f
 const vid=document.getElementById("vid"), snap=document.getElementById("snap");
 let current=null, clockTimer=null, hls=null, snapTimer=null;
 
+/* 本地 file:// 打开时浏览器没有 origin 可发，YouTube 播放器必然报 Error 153，这里明确提示，避免误判成站点坏了 */
+if(location.protocol==="file:"){
+  const bar=document.createElement("div");
+  bar.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:linear-gradient(90deg,#b3341a,#d4631f);color:#fff;font:13px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;padding:10px 44px 10px 16px;text-align:center";
+  bar.innerHTML="⚠️ 当前是用本地文件（file://）打开的，浏览器不会发送 Referer，YouTube 播放器会一律报 <b>Error 153</b>。"
+    +"部署到 GitHub Pages 等 https 页面，或在本机起一个 http 服务（如 <code>python -m http.server</code>）再打开就正常。";
+  const x=document.createElement("button");
+  x.textContent="✕";
+  x.style.cssText="position:absolute;right:12px;top:8px;background:transparent;border:0;color:#fff;font-size:16px;cursor:pointer;opacity:.8";
+  x.onclick=()=>bar.remove();
+  bar.appendChild(x);
+  document.body.appendChild(bar);
+  document.body.style.paddingTop="46px";
+}
+
 function camType(cam){ return cam.type || (cam.yt||cam.channel ? "yt" : ""); }
 function embedUrl(cam){
   if(cam.yt) return "https://www.youtube.com/embed/"+cam.yt+"?autoplay=1&mute=1&rel=0&playsinline=1";
@@ -331,7 +349,15 @@ function openCam(cam, fly=true){
   const tick=()=>{ document.getElementById("pSub").textContent = cam.place+" · "+cam.en+" · 当地时间 "+localTime(cam.tz); };
   tick(); clearInterval(clockTimer); clockTimer=setInterval(tick,1000);
   vempty.style.display="none";
-  if(t==="yt"){
+  if(cam.noembed){
+    frame.style.display="none";
+    vempty.style.display="flex";
+    vempty.innerHTML='<div style="max-width:360px;line-height:1.75"><div style="font-size:32px;margin-bottom:10px">🚫</div>'
+      +'<div style="color:#d7e6ff;font-size:14px;font-weight:600;margin-bottom:8px">这个频道关闭了第三方嵌入</div>'
+      +'<div style="font-size:12.5px;color:#8fa8cc;margin-bottom:16px">直接在网页里播放会触发 YouTube 的 Error 153 / 150。点下面的按钮可以在新窗口看完整直播，画质和弹幕都正常。</div>'
+      +'<button id="noembedGo" style="cursor:pointer;border:0;border-radius:999px;padding:10px 22px;background:#e5484d;color:#fff;font-size:13px;font-weight:600">▶ 在 YouTube 观看</button></div>';
+    document.getElementById("noembedGo").onclick=()=>window.open("https://www.youtube.com/watch?v="+cam.yt,"_blank");
+  } else if(t==="yt"){
     const url=embedUrl(cam);
     if(url){ frame.style.display="block"; frame.src=url; }
     else { vempty.style.display="flex"; vempty.textContent="这个点暂时没有稳定的直播源"; }
