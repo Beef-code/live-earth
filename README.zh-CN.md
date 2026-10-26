@@ -48,6 +48,7 @@
 | `src` | 源 | `hls` 填 `.m3u8` 地址；`img` 填快照图片地址 |
 | `refresh` | 可选 | 快照刷新秒数，默认 60 |
 | `page` | 可选 | 源站页面，用于「在源站打开」按钮 |
+| `bili` | 可选 | B 站房间号。带上后会多出「试播 B 站播放器」按钮，加载官方 `blanc` 播放器 |
 | `noembed` | 可选 | `true` = 该频道禁止第三方嵌入，不加载 iframe，改显示直达按钮 |
 | `iss` | 可选 | `true` = 国际空间站，不落在地表、不参与地图选点 |
 
@@ -181,7 +182,7 @@ node validate.js index.html
 
 ## 已知限制
 
-- **国内平台全部禁嵌**：B 站 `X-Frame-Options: SAMEORIGIN`、央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同理；B 站 API 见外部 Origin 直接 403 且不带 CORS 头。所以国内机位只能走「实时关键帧快照」这条路，点「在源站打开」去 B 站看完整直播
+- **国内平台基本都禁嵌，但 B 站官方第三方播放器 `/blanc/{room}` 是例外**：它没有 `X-Frame-Options` 也没有 CSP，可以直接 iframe。真正的卡点是 **Referer**——B 站 CDN 和取流 API 对「外部 Referer」一律 403、对「完全不带 Referer」返回 200（快照图之前裂掉就是这个原因）。代码里两处都处理了：`<img id="snap">` 带 `referrerpolicy="no-referrer"`；B 站播放器 iframe 每次加载时切成 `no-referrer`（YouTube 需要相反策略，所以是逐次设置的）。其余限制照旧：央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同样禁嵌，B 站 API 见外部 Origin 直接 403 且无 CORS 头
 - **SkylineWebcams / earthTV 也禁嵌**（`SAMEORIGIN`），别指望用它们补城市机位
 - **YouTube 直播 ID 会失效**：主播重开一场直播就换 ID，需要定期重验
 - **吉隆坡没有可嵌的天际线直播源**，全网搜到的都是监控头和时间钟，只能用 `noembed` 直达

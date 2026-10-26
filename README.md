@@ -48,6 +48,7 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 | `src` | source | `.m3u8` URL for `hls`; image URL for `img` |
 | `refresh` | optional | Snapshot refresh interval in seconds, default 60 |
 | `page` | optional | Original page, used by the "Open at source" button |
+| `bili` | optional | Bilibili room id. Adds a "try the Bilibili player" button that loads their official `blanc` embed |
 | `noembed` | optional | `true` = channel blocks third-party embedding. Skips the iframe and shows a direct link instead |
 | `iss` | optional | `true` = International Space Station. Not placed on the surface, excluded from map selection |
 
@@ -185,7 +186,7 @@ Only trust it when it prints `ALL CHECKS PASSED`.
 
 ## Known limitations
 
-- **Chinese platforms all block embedding.** Bilibili sends `X-Frame-Options: SAMEORIGIN`; CCTV's Yangshipin uses `CSP: frame-ancestors 'self'`; Douyin, Kuaishou, Huya and Douyu behave the same. Bilibili's API returns 403 with no CORS header when it sees a foreign `Origin`, so a static site cannot even fetch a stream URL. Domestic cameras therefore go through a **live keyframe snapshot** with an "Open at source" button to the actual room
+- **Chinese platforms all block embedding**, with one exception: Bilibili's official third-party player `/blanc/{room}` sends **no `X-Frame-Options` and no CSP**, so it can be embedded. The catch is referrer: Bilibili's CDN and stream API both answer **403 to a foreign Referer and 200 to no Referer at all** — which is also why plain snapshots used to break. Two consequences, both handled in the code: the `<img id="snap">` carries `referrerpolicy="no-referrer"`, and the optional Bilibili player iframe is loaded with the same policy, switched per-load because YouTube needs the opposite. Everything else about Chinese platforms still holds: Bilibili sends `X-Frame-Options: SAMEORIGIN`; CCTV's Yangshipin uses `CSP: frame-ancestors 'self'`; Douyin, Kuaishou, Huya and Douyu behave the same. Bilibili's API returns 403 with no CORS header when it sees a foreign `Origin`, so a static site cannot even fetch a stream URL. Domestic cameras therefore go through a **live keyframe snapshot** with an "Open at source" button to the actual room
 - **SkylineWebcams and earthTV block embedding too** (`SAMEORIGIN`). Do not count on them to fill city slots
 - **YouTube live IDs expire.** Restart a broadcast and the ID changes; cameras need re-verification periodically
 - **No embeddable Kuala Lumpur skyline exists.** Everything searchable is a traffic camera or a clock; the KL pin uses `noembed` and links out

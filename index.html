@@ -90,12 +90,13 @@
 
 <aside id="player">
   <button id="close" title="关闭">✕</button>
-  <div class="vwrap"><div class="vempty" id="vempty">选一个点，这里就会播那里的直播</div><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><video id="vid" controls autoplay muted playsinline style="display:none"></video><img id="snap" class="snap" alt="" style="display:none"></div>
+  <div class="vwrap"><div class="vempty" id="vempty">选一个点，这里就会播那里的直播</div><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><video id="vid" controls autoplay muted playsinline style="display:none"></video><img id="snap" class="snap" alt="" referrerpolicy="no-referrer" style="display:none"></div>
   <div class="meta">
     <h2 id="pTitle"></h2>
     <div class="sub" id="pSub"></div>
     <div class="desc" id="pDesc"></div>
     <div class="row">
+      <button id="biliBtn" style="display:none">▶ 试播 B 站播放器</button>
       <button id="openSrc">▶ 在源站打开</button>
       <button id="expandBtn">⛶ 放大</button>
       <button id="nextBtn">⏭ 随机下一个</button>
@@ -250,11 +251,11 @@ const CAMS = [
   {name:"NASA 官方空间站直播", en:"NASA ISS Live", pEn:"Low Earth orbit · NASA", dEn:"NASA's ISS feed, a backup for Sen's 4K view. Goes dark on the night side, which is normal.", place:"近地轨道 · NASA 官方", lat:0, lon:0, yt:"ROboUHfPUrU", tz:"UTC", cat:"太空", icon:"🛰️", desc:"NASA 官方频道的国际空间站高清直播，和 Sen 的 4K 机位互为备份。飞到夜面时会黑一阵，属正常。", iss:true},
   /* ===== 国内源（B站慢直播）：B站/央视频/央视网全部禁止第三方 iframe，API 见外部 Origin 直接 403，
      所以只能放「实时关键帧快照」——约每 30 秒换一张，点「在源站打开」去 B 站看完整直播 ===== */
-  {name:"维港夜景 · 慢直播", en:"Victoria Harbour Slow-Live", pEn:"Hong Kong, China · Hong Kong", dEn:"Live keyframe from a 24h Bilibili slow-live room — drone view over Victoria Harbour. Use the button for the full stream.", place:"中国香港 · 香港", lat:22.293, lon:114.169, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260055000013131453n639q7.jpg", page:"https://live.bilibili.com/13131453", refresh:30, tz:"Asia/Hong_Kong", cat:"城市", icon:"🌃", desc:"B 站 24 小时慢直播间的实时关键帧快照，无人机视角看维多利亚港。想看连续画面点下面按钮去 B 站直播间。"},
-  {name:"玉龙雪山 · 大研古城", en:"Yulong Snow Mountain, Lijiang", pEn:"China · Yunnan · Lijiang", dEn:"Lijiang slow-live: Jade Dragon Snow Mountain above Dayan old town. Dawn sometimes brings the golden summit.", place:"中国 · 云南 · 丽江", lat:26.872, lon:100.229, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057000030487299bnzpta.jpg", page:"https://live.bilibili.com/30487299", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"丽江实时风景慢直播机位，玉龙雪山和大研古城同框。清晨有机会看到日照金山。B 站房间的实时关键帧快照。"},
-  {name:"南迦巴瓦日照金山", en:"Namcha Barwa, Nyingchi", pEn:"China · Tibet · Mainling", dEn:"Namcha Barwa slow-live from the Mainling tourism association. The golden sunrise lasts only minutes.", place:"中国 · 西藏 · 米林", lat:29.632, lon:95.061, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057001994821649hbwy50.jpg", page:"https://live.bilibili.com/1994821649", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"米林市旅游协会的南迦巴瓦慢直播。中国最美雪山之一，日照金山每天只出现清晨几分钟，看到就是赚到。"},
-  {name:"青岛海边", en:"Qingdao Seafront", pEn:"China · Shandong · Qingdao", dEn:"Seaside slow-live facing the sea — red roofs, green trees, blue water. Qingdao's signature combination.", place:"中国 · 山东 · 青岛", lat:36.067, lon:120.343, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022570982xw7b2c.jpg", page:"https://live.bilibili.com/22570982", refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"半岛都市报的海边慢直播机位，面朝大海。白天看海晚上看灯，红瓦绿树碧海蓝天是青岛的招牌。"},
-  {name:"高崖子天文台全天相机", en:"Gaoyazi Observatory All-Sky", pEn:"China · Qinghai · Delingha", dEn:"All-sky camera at a shared observatory: clouds by day, stars by night. Very transparent plateau sky.", place:"中国 · 青海 · 德令哈", lat:37.370, lon:97.360, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022325806o18uos.jpg", page:"https://live.bilibili.com/22325806", refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🔭", desc:"共享天文台的全天相机，白天拍云、晚上拍星。西北高原夜空透明度极高，银河季值得挂着看。"},];
+  {name:"维港夜景 · 慢直播", en:"Victoria Harbour Slow-Live", pEn:"Hong Kong, China · Hong Kong", dEn:"Live keyframe from a 24h Bilibili slow-live room — drone view over Victoria Harbour. Use the button for the full stream.", place:"中国香港 · 香港", lat:22.293, lon:114.169, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260055000013131453n639q7.jpg", page:"https://live.bilibili.com/13131453", bili:13131453,refresh:30, tz:"Asia/Hong_Kong", cat:"城市", icon:"🌃", desc:"B 站 24 小时慢直播间的实时关键帧快照，无人机视角看维多利亚港。想看连续画面点下面按钮去 B 站直播间。"},
+  {name:"玉龙雪山 · 大研古城", en:"Yulong Snow Mountain, Lijiang", pEn:"China · Yunnan · Lijiang", dEn:"Lijiang slow-live: Jade Dragon Snow Mountain above Dayan old town. Dawn sometimes brings the golden summit.", place:"中国 · 云南 · 丽江", lat:26.872, lon:100.229, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057000030487299bnzpta.jpg", page:"https://live.bilibili.com/30487299", bili:30487299,refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"丽江实时风景慢直播机位，玉龙雪山和大研古城同框。清晨有机会看到日照金山。B 站房间的实时关键帧快照。"},
+  {name:"南迦巴瓦日照金山", en:"Namcha Barwa, Nyingchi", pEn:"China · Tibet · Mainling", dEn:"Namcha Barwa slow-live from the Mainling tourism association. The golden sunrise lasts only minutes.", place:"中国 · 西藏 · 米林", lat:29.632, lon:95.061, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057001994821649hbwy50.jpg", page:"https://live.bilibili.com/1994821649", bili:1994821649,refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"米林市旅游协会的南迦巴瓦慢直播。中国最美雪山之一，日照金山每天只出现清晨几分钟，看到就是赚到。"},
+  {name:"青岛海边", en:"Qingdao Seafront", pEn:"China · Shandong · Qingdao", dEn:"Seaside slow-live facing the sea — red roofs, green trees, blue water. Qingdao's signature combination.", place:"中国 · 山东 · 青岛", lat:36.067, lon:120.343, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022570982xw7b2c.jpg", page:"https://live.bilibili.com/22570982", bili:22570982,refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"半岛都市报的海边慢直播机位，面朝大海。白天看海晚上看灯，红瓦绿树碧海蓝天是青岛的招牌。"},
+  {name:"高崖子天文台全天相机", en:"Gaoyazi Observatory All-Sky", pEn:"China · Qinghai · Delingha", dEn:"All-sky camera at a shared observatory: clouds by day, stars by night. Very transparent plateau sky.", place:"中国 · 青海 · 德令哈", lat:37.370, lon:97.360, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022325806o18uos.jpg", page:"https://live.bilibili.com/22325806", bili:22325806,refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🔭", desc:"共享天文台的全天相机，白天拍云、晚上拍星。西北高原夜空透明度极高，银河季值得挂着看。"},];
 
 const CATS = {"城市":"#ff9f43","水乡":"#54c8ff","自然":"#7bed6d","野生动物":"#ffd32a","星空":"#b39dff","太空":"#ff7eb6"};
 
@@ -281,6 +282,7 @@ const UI={
     nbTitle:"这个频道关闭了第三方嵌入",
     nbBody:"直接在网页里播放会触发 YouTube 的 Error 153 / 150。点下面的按钮可以在新窗口看完整直播，画质和弹幕都正常。",
     nbBtn:"▶ 在 YouTube 观看",
+    tryBili:"▶ 试播 B 站播放器", backSnap:"📷 回到快照",
     empty:"没有符合条件的机位，换个筛选试试",
     issLabel:"🛰️ 国际空间站", issSub:"轨道直播 · 不在地球表面",
     srcHls:"直连", srcSnap:"快照",
@@ -304,6 +306,7 @@ const UI={
     nbTitle:"This channel blocks third-party embedding",
     nbBody:"Playing it inside a page triggers YouTube error 153 / 150. Use the button below to watch the full stream in a new window.",
     nbBtn:"▶ Watch on YouTube",
+    tryBili:"▶ Try Bilibili player", backSnap:"📷 Back to snapshot",
     empty:"No cameras match these filters — try loosening them",
     issLabel:"🛰️ International Space Station", issSub:"Orbital feed · not on the surface",
     srcHls:"HLS", srcSnap:"snap",
@@ -452,6 +455,23 @@ function renderBadge(t){
     : (t==="img"||t==="sgapi") ? '<span class="livebadge img">'+L("badgeSnap")+'</span>'
     : '<span class="livebadge">'+L("live")+'</span>';
 }
+/* B 站：官方第三方播放器 blanc。B站接口对「外部 Referer」返回 403，对「无 Referer」返回 200，
+   所以 iframe 必须带 referrerpolicy="no-referrer"，否则播放器取不到流、一片黑。 */
+function setBiliMode(cam, on){
+  if(!cam || !cam.bili) return;
+  if(on){
+    snap.style.display="none"; vempty.style.display="none";
+    frame.referrerPolicy="no-referrer";
+    frame.style.display="block";
+    frame.src="https://live.bilibili.com/blanc/"+cam.bili+"?liteVersion=true&danmaku=false&highQuality=true&autoplay=true";
+  } else {
+    frame.removeAttribute("src"); frame.style.display="none";
+    frame.referrerPolicy="strict-origin-when-cross-origin";
+    snap.style.display="block";
+  }
+  const b=document.getElementById("biliBtn");
+  if(b) b.textContent = frame.style.display==="none" ? L("tryBili") : L("backSnap");
+}
 function renderPlayerTexts(){
   const cam=current; if(!cam) return;
   const t=camType(cam);
@@ -469,6 +489,11 @@ function renderPlayerTexts(){
     srcBtn.style.display=""; srcBtn.textContent=L("openPage"); srcBtn.onclick=()=>window.open(cam.page,"_blank");
   } else { srcBtn.style.display="none"; }
   if(cam.noembed) showNoEmbed(cam);
+  const bb=document.getElementById("biliBtn");
+  if(bb){
+    if(cam.bili){ bb.style.display=""; bb.textContent = frame.style.display==="none" ? L("tryBili") : L("backSnap"); }
+    else bb.style.display="none";
+  }
 }
 function showNoEmbed(cam){
   vempty.style.display="flex";
@@ -487,7 +512,7 @@ function openCam(cam, fly=true){
     frame.style.display="none";
   } else if(t==="yt"){
     const url=embedUrl(cam);
-    if(url){ frame.style.display="block"; frame.src=url; }
+    if(url){ frame.referrerPolicy="strict-origin-when-cross-origin"; frame.style.display="block"; frame.src=url; }
     else { vempty.style.display="flex"; vempty.textContent=L("noSrc"); }
   } else if(t==="hls"){
     vid.style.display="block";
@@ -511,6 +536,7 @@ function openCam(cam, fly=true){
 }
 document.getElementById("close").onclick=()=>{ player.classList.remove("open"); player.classList.remove("max"); document.getElementById("expandBtn").textContent=L("expand"); stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
 document.getElementById("expandBtn").onclick=e=>{ const m=player.classList.toggle("max"); e.target.textContent = m ? L("shrink") : L("expand"); };
+document.getElementById("biliBtn").onclick=()=>{ if(current && current.bili) setBiliMode(current, frame.style.display==="none"); };
 document.getElementById("nextBtn").onclick=()=>randomCam();
 document.getElementById("randomBtn").onclick=()=>randomCam();
 function randomCam(){ const pool=filteredCams().filter(c=>!c.disabled); if(!pool.length) return; openCam(pool[Math.floor(Math.random()*pool.length)]); }
