@@ -8,9 +8,10 @@
 validate.js 只查结构，查不出这个，必须联网。
 
 判活方法（踩过的坑都写在 README 里了）：
-  * YouTube —— 用 innertube player 接口读 videoDetails.isLive
+  * YouTube（直播）—— 用 innertube player 接口读 videoDetails.isLive
       - 不要爬 watch 页面：几十次请求后会返回 reCAPTCHA 页，静默变成假死
       - 不要用 maxresdefault_live.jpg：已结束的直播也返回 200
+  * YouTube（步行漫游，walk:true）—— 是录播，没有直播状态，只查 oEmbed 是否 200（可公开嵌入）
   * Bilibili —— room/v1/Room/get_info 的 live_status == 1，并且 keyframe 不带 Referer 也能取到
   * 其他 —— 直接 HEAD 源地址
 
@@ -77,6 +78,12 @@ def bili_live(rid):
 
 def check(cam):
     name = cam.get("name", "?")
+    if cam.get("walk"):
+        # 步行漫游是录播，没有直播状态可查，只看是否还能公开嵌入
+        code = yt_embeddable(cam["yt"])
+        if code == "200":
+            return ("VOD", name, cam["yt"], "步行漫游录播 · 可嵌")
+        return ("DEAD", name, cam["yt"], "oEmbed " + code)
     if cam.get("yt"):
         live, title = yt_is_live(cam["yt"])
         if live is None:
@@ -140,7 +147,8 @@ def main():
     for o in objs:
         parsed.append({"name": field(o, "name"), "yt": field(o, "yt"),
                        "bili": numfield(o, "bili"), "src": field(o, "src"),
-                       "api": field(o, "api"), "type": field(o, "type")})
+                       "api": field(o, "api"), "type": field(o, "type"),
+                       "walk": "walk:true" in o})
 
     print("共 %d 个机位，开始联网复核…\n" % len(parsed))
     rows = []
@@ -162,7 +170,7 @@ def main():
             print("  [%s] %-30s %-58s %s" % (st, name, sid, why))
         print("\n直播 ID 会过期。换 ID 的办法见 README 的 Known limitations。")
         return 1
-    print("\n全部机位都在播。")
+    print("\n全部机位正常：直播都在播，漫游录播都还能嵌。")
     return 0
 
 

@@ -13,15 +13,15 @@ A single-file globe of live cameras. Spin the planet, click a dot, watch what is
 Everything lives in one `index.html`. No build step, no `npm install`, no backend.
 
 - **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
-- **148 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
-- **Four source types, auto-detected** — YouTube embeds, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
-- **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, and by category; the pins on the globe are filtered along with the list
+- **217 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station — plus **69 recorded walking tours**, one per city
+- **Five source types, auto-detected** — YouTube live embeds, YouTube walking-tour videos, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
+- **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, by category (city / coast / nature / wildlife / night sky / space / **walking tour**), and — for walking tours — by day or night; the pins on the globe are filtered along with the list
 - **Bilingual, 中文 / English** — one toggle in the top-right corner, remembered across visits; every camera carries both languages
 - **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
-By category: cities 57 · coast & water 29 · nature 32 · wildlife 18 · night sky 8 · space 4
+By category: cities 57 · coast & water 29 · nature 32 · wildlife 18 · night sky 8 · space 4 · **walking tours 69** (55 day / 14 night, 50 countries)
 
-By source: YouTube 113 · Bilibili slow-live 24 · snapshot 7 · HLS 3 · open API 1
+By source: YouTube live 113 · YouTube walking tours 69 · Bilibili slow-live 24 · snapshot 7 · HLS 3 · open API 1
 
 Every YouTube pin was re-verified as actually live on **2026-10-26**.
 
@@ -42,7 +42,10 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 | `dEn` | ✅ | English description, shown when the UI is in English |
 | `lat` / `lon` | ✅ | Decimal degrees. For the ISS use `0, 0` plus `iss:true` |
 | `tz` | ✅ | IANA timezone, e.g. `Asia/Kuala_Lumpur`, used for local time |
-| `cat` | ✅ | `城市` / `水乡` / `自然` / `野生动物` / `星空` / `太空` |
+| `cat` | ✅ | `城市` / `水乡` / `自然` / `野生动物` / `星空` / `太空` / `漫游` (walking tour) |
+| `walk` | optional | `true` = this is a **recorded** walking tour, not a live stream. Skips the liveness check and shows a "recorded" badge instead of LIVE |
+| `tod` | with `walk` | `day` or `night`. Powers the extra ☀️/**🌙** filter and the tag next to the name |
+| `len` | with `walk` | Runtime as it appears on YouTube, e.g. `1:12:40` |
 | `icon` | ✅ | A single emoji |
 | `desc` | ✅ | One or two plain sentences about **what you actually see**. No "8K cinematic beauty" filler |
 | `yt` | source | YouTube **video ID** (the 11 characters after `watch?v=`), not the full URL |
@@ -50,7 +53,7 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 | `src` | source | `.m3u8` URL for `hls`; image URL for `img` |
 | `refresh` | optional | Snapshot refresh interval in seconds, default 60 |
 | `page` | optional | Original page, used by the "Open at source" button |
-| `bili` | optional | Bilibili room id. Adds a "try the Bilibili player" button that loads their official `blanc` embed |
+| `bili` | optional | Bilibili room id. Marks the camera as Bilibili in the source filter and keeps its keyframe on a 30 s refresh |
 | `noembed` | optional | `true` = channel blocks third-party embedding. Skips the iframe and shows a direct link instead |
 | `iss` | optional | `true` = International Space Station. Not placed on the surface, excluded from map selection |
 
@@ -108,6 +111,21 @@ The UI ships in Chinese and English. The toggle sits in the top-right corner, an
 - **Share a language directly:** `?lang=en` or `?lang=zh` on the URL overrides the stored preference, e.g. https://beef-code.github.io/live-earth/?lang=en
 - **Adding a camera:** fill in `pEn` and `dEn` as well as `place` and `desc`, otherwise it falls back to Chinese in English mode
 - **Category names** stay Chinese in the data (`城市`, `水乡`, …) because they are also the filter keys; `CAT_EN` maps them for display
+
+## Walking tours are a different animal
+
+Most of the site is live: fixed cameras and 24/7 streams. Walking tours are not. They are **recorded** first-person videos — someone walked through Lisbon for 78 minutes and uploaded it. 69 of them, one per city, 50 countries.
+
+That difference matters in four places:
+
+- **They never "die" the way live streams do.** A live ID expires the moment the broadcaster restarts; a recorded video keeps the same ID for years. So `check-live.py` treats them separately — `walk:true` goes through the oEmbed check only, and reports `VOD` instead of `LIVE`.
+- **The badge says 🎬 步行漫游 · 录播**, not LIVE. Presenting a recording as a live feed would be a lie a viewer finds out in ten seconds anyway.
+- **Day or night is measured, not guessed.** The `tod` field comes from looking at the actual thumbnail — 55 day walks, 14 night walks. There is no API that tells you "this walk is at night"; you have to see it. A luminance average alone is not enough (overcast London reads as dark as Vegas at night), so the borderline ones were inspected by eye.
+- **The map pin is the city centre**, not the exact street. A 90-minute walk covers a whole district; a single point would be false precision.
+
+If a walking tour ever disappears, the replacement path is different too: search YouTube for `<city> walking tour 4k`, keep candidates whose title contains the city name and whose duration is 15+ minutes, and require oEmbed `200`.
+
+---
 
 ## Two pitfalls worth knowing
 
