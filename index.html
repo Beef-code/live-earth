@@ -269,7 +269,7 @@ const UI={
     docTitle:"直播地球 · 世界风景直播",
     tagline:"点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 开放直连流 + 官方快照，开放的都收",
     spinPause:"⏸ 暂停自转", spinRun:"▶ 继续自转", random:"🎲 随机飞一个",
-    srcLabel:"来源", all:"全部", hlsShort:"直连流", snapShort:"快照", apiShort:"开放 API",
+    srcLabel:"来源", all:"全部", hlsShort:"直连流", snapShort:"快照", apiShort:"开放 API", biliShort:"B 站慢直播", badgeBili:"📺 B 站 24h 直播",
     countryLabel:"国家 / 地区", anyCountry:"全部国家", catLabel:"类型", anyCat:"全部类型",
     count:"全部机位", unit:"个",
     hint:"拖动转地球 · 滚轮缩放 · 点光点看直播",
@@ -293,7 +293,7 @@ const UI={
     docTitle:"Live Earth · World Live Cams",
     tagline:"Click a dot on the globe and watch that place right now · YouTube live, open HLS streams and official snapshots — everything that is open",
     spinPause:"⏸ Stop rotation", spinRun:"▶ Resume rotation", random:"🎲 Surprise me",
-    srcLabel:"SOURCE", all:"All", hlsShort:"HLS", snapShort:"Snapshot", apiShort:"Open API",
+    srcLabel:"SOURCE", all:"All", hlsShort:"HLS", snapShort:"Snapshot", apiShort:"Open API", biliShort:"Bilibili 24/7", badgeBili:"📺 Bilibili 24/7",
     countryLabel:"COUNTRY / REGION", anyCountry:"All countries", catLabel:"CATEGORY", anyCat:"All categories",
     count:"All cameras", unit:"",
     hint:"Drag to spin · scroll to zoom · click a dot to watch",
@@ -329,7 +329,7 @@ const catName=c=>isZh()?c.cat:(CAT_EN[c.cat]||c.cat);
 function subText(cam){ const lt=localTime(cam.tz); return isZh() ? (cam.place+" · "+cam.en+" · "+L("localTime")+" "+lt) : ((cam.pEn||cam.place)+" · "+L("localTime")+" "+lt); }
 
 /* 来源归类：yt / hls / img / sgapi */
-function srcOf(c){ if(c.yt||c.channel) return "yt"; return c.type||"other"; }
+function srcOf(c){ if(c.yt||c.channel) return "yt"; if(c.bili) return "bili"; return c.type||"other"; }
 CAMS.forEach(c=>{
   c.__cc = c.place.split(" · ")[0].split(" / ");
   c.__ce = (c.pEn||c.en||"").split(" · ")[0].split(" / ");
@@ -450,7 +450,9 @@ function markSelected(cam){
   } else { window.__pinCam=null; window.__pinEl=null; }
 }
 /* 播放面板的文案（语言切换时也走这里重刷，不重载媒体） */
-function renderBadge(t){
+function renderBadge(cam){
+  const t=camType(cam);
+  if(cam.bili) return '<span class="livebadge img">'+L("badgeBili")+'</span>';
   return t==="hls" ? '<span class="livebadge hls">'+L("badgeHls")+'</span>'
     : (t==="img"||t==="sgapi") ? '<span class="livebadge img">'+L("badgeSnap")+'</span>'
     : '<span class="livebadge">'+L("live")+'</span>';
@@ -475,7 +477,7 @@ function setBiliMode(cam, on){
 function renderPlayerTexts(){
   const cam=current; if(!cam) return;
   const t=camType(cam);
-  document.getElementById("pTitle").innerHTML = renderBadge(t)+camName(cam);
+  document.getElementById("pTitle").innerHTML = renderBadge(cam)+camName(cam);
   document.getElementById("pDesc").textContent = camDesc(cam)||"";
   document.getElementById("pSub").textContent = subText(cam);
   document.getElementById("expandBtn").textContent = player.classList.contains("max")?L("shrink"):L("expand");
@@ -548,7 +550,10 @@ function renderList(){
   window.__allow=new Set(arr.map(c=>c.name));
   if(window.__applyCull) window.__applyCull();
 
-  const srcOpts=[["all",L("all")],["yt","YouTube"],["hls",L("hlsShort")],["img",L("snapShort")],["sgapi",L("apiShort")]];
+  const srcCount={}; CAMS.forEach(c=>{ const k=srcOf(c); srcCount[k]=(srcCount[k]||0)+1; });
+  const srcOpts=[["all",L("all"),CAMS.length],["yt","YouTube",srcCount.yt||0],["bili",L("biliShort"),srcCount.bili||0],
+                 ["hls",L("hlsShort"),srcCount.hls||0],["img",L("snapShort"),srcCount.img||0],["sgapi",L("apiShort"),srcCount.sgapi||0]];
+  const srcHtml=srcOpts.map(o=>'<option value="'+o[0]+'"'+(F.src===o[0]?" selected":"")+'>'+o[1]+' ('+o[2]+')</option>').join("");
   const ctryOpts=['<option value="all">'+L("anyCountry")+' · '+CAMS.length+'</option>']
     .concat(COUNTRY_LIST.map(o=>'<option value="'+o.zh+'"'+(F.ctry===o.zh?" selected":"")+'>'+countryName(o)+' ('+o.n+')</option>'));
   const catOpts=['<option value="all">'+L("anyCat")+'</option>']
@@ -557,7 +562,7 @@ function renderList(){
   list.innerHTML =
     '<div id="filters">'
     + '<div class="flabel">'+L("srcLabel")+'</div>'
-    + '<div class="frow">'+srcOpts.map(o=>'<button class="chip'+(F.src===o[0]?" on":"")+'" data-src="'+o[0]+'">'+o[1]+'</button>').join("")+'</div>'
+    + '<div class="frow"><select data-sel="src">'+srcHtml+'</select></div>'
     + '<div class="flabel">'+L("countryLabel")+'</div>'
     + '<div class="frow"><select data-sel="ctry">'+ctryOpts.join("")+'</select></div>'
     + '<div class="flabel">'+L("catLabel")+'</div>'
@@ -567,7 +572,7 @@ function renderList(){
 
   if(!arr.length){ const e=document.createElement("div"); e.className="empty"; e.textContent=L("empty"); list.appendChild(e); }
 
-  list.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{ F.src=b.dataset.src; renderList(); });
+  list.querySelector('[data-sel="src"]').onchange=e=>{ F.src=e.target.value; renderList(); };
   list.querySelector('[data-sel="ctry"]').onchange=e=>{ F.ctry=e.target.value; renderList(); };
   list.querySelector('[data-sel="cat"]').onchange=e=>{ F.cat=e.target.value; renderList(); };
 
@@ -579,7 +584,10 @@ function renderList(){
       b.onclick=()=>openCam(cam,false);
     } else {
       const t=srcOf(cam);
-      const tag = t==="yt" ? " · YouTube" : (t==="hls" ? ' · <span class="src">'+L("srcHls")+'</span>' : ' · <span class="src">'+L("srcSnap")+'</span>');
+      const tag = t==="yt" ? " · YouTube"
+        : t==="bili" ? ' · <span class="src">'+L("biliShort")+'</span>'
+        : t==="hls" ? ' · <span class="src">'+L("srcHls")+'</span>'
+        : ' · <span class="src">'+L("srcSnap")+'</span>';
       b.innerHTML="<b>"+cam.icon+" "+camName(cam)+"</b><span>"+camPlace(cam)+" · "+catName(cam)+tag+"</span>";
       b.onclick=()=>openCam(cam);
     }
