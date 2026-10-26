@@ -185,7 +185,8 @@ node validate.js index.html
 - **国内平台基本都禁嵌。B 站 `/blanc/{room}` 播放器看着像例外**——它确实没有 `X-Frame-Options` 也没有 CSP，取流 API 不带 Referer 也返回 200——但实测播放器一直是黑屏（无头 Edge 和真实浏览器都试过），所以 B 站试播按钮已经**移除**。真正能用的只有关键帧：B 站 CDN 对「外部 Referer」一律 403、对「完全不带 Referer」返回 200，所以 `<img id="snap">` 必须带 `referrerpolicy="no-referrer"`，就差这一个属性。其余限制照旧：央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同样禁嵌，B 站 API 见外部 Origin 直接 403 且无 CORS 头
 - **SkylineWebcams / earthTV 也禁嵌**（`SAMEORIGIN`），别指望用它们补城市机位
 - **YouTube 直播 ID 会失效**：主播重开一场直播就换 ID，需要定期重验
-- **吉隆坡没有可嵌的天际线直播源**，全网搜到的都是监控头和时间钟，只能用 `noembed` 直达
+- **部分频道直接关闭嵌入**：`oEmbed` 返回 **401** 而不是 200，没有绕过的办法。吉隆坡天际线、卢卡拉机场这两个机位就属于这类，所以带 `noembed:true`，根本不加载 iframe。
+- **YouTube 的 `_live` 缩略图是这类频道的解法**：`https://i.ytimg.com/vi/<ID>/maxresdefault_live.jpg` 就是当前直播帧，**完全没有防盗链**（任意 Referer 都能取，`file://` 也行），并会按 `hqdefault_live` → `hqdefault` 逐级回退。代价是新鲜度：`Cache-Control: max-age=300`，CDN 同一帧会持续返回 **5 分钟**，加随机参数也绕不过去。当静帧够用，当视频不行。这两个机位就是这么处理的：实时封面 + 一个跳转按钮
 - 纯静态、无后端：不能保存收藏，也不能代理播放
 
 ---

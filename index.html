@@ -55,6 +55,12 @@
   #player.open{transform:none}
   #player .vwrap{position:relative;padding-top:56.25%;background:#000}
   #player iframe,#player video,#player img.snap{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;background:#000}
+  /* 禁嵌频道：用 YouTube 的实时关键帧当封面，底部压一条提示 + 跳转按钮 */
+  #player #noposter{position:absolute;inset:0;display:none;background:#000}
+  #player #noposter img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  #player #noposterBar{position:absolute;inset:auto 0 0 0;display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding:16px 10px 8px;background:linear-gradient(transparent,rgba(0,0,0,.85) 60%)}
+  #player #noposterBar span{font-size:10.5px;color:#cfe0ff;line-height:1.45;text-align:left}
+  #player #noembedGo{cursor:pointer;border:0;border-radius:999px;padding:7px 13px;background:#e5484d;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;flex:0 0 auto}
   #player .livebadge.hls{background:#2563eb} #player .livebadge.img{background:#2e9e5b}
   #list .item .src{color:#7fd4a8}
   #player .vempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8fa8cc;font-size:13px;padding:20px;text-align:center}
@@ -90,7 +96,7 @@
 
 <aside id="player">
   <button id="close" title="关闭">✕</button>
-  <div class="vwrap"><div class="vempty" id="vempty">选一个点，这里就会播那里的直播</div><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><video id="vid" controls autoplay muted playsinline style="display:none"></video><img id="snap" class="snap" alt="" referrerpolicy="no-referrer" style="display:none"></div>
+  <div class="vwrap"><div id="noposter"><img id="ytPoster" alt="" referrerpolicy="no-referrer"><div id="noposterBar"><span id="noposterTxt"></span><button id="noembedGo"></button></div></div><div class="vempty" id="vempty">选一个点，这里就会播那里的直播</div><iframe id="frame" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><video id="vid" controls autoplay muted playsinline style="display:none"></video><img id="snap" class="snap" alt="" referrerpolicy="no-referrer" style="display:none"></div>
   <div class="meta">
     <h2 id="pTitle"></h2>
     <div class="sub" id="pSub"></div>
@@ -203,7 +209,7 @@ const CAMS = [
   {name:"象山俯瞰台北 101", en:"Elephant Mountain, Taipei", pEn:"Taiwan, China · Taipei", dEn:"Official Taipei camera from Elephant Mountain — Taipei 101 and the basin, classic from dusk on.", place:"中国台湾 · 台北", lat:25.033, lon:121.570, yt:"z_fY1pj1VBw", tz:"Asia/Taipei", cat:"城市", icon:"🏙️", desc:"台北观光即时影像，从象山顶看 101 大楼和台北盆地，傍晚到夜景是最经典的机位。"},
   {name:"首尔 · 汉江", en:"Han River, Seoul", pEn:"South Korea · Seoul", dEn:"4K on the Han River at Yeouido: water, bridges and skyline. The whole river lights up at night.", place:"韩国 · 首尔", lat:37.530, lon:126.940, yt:"vk5BHoDxXf0", tz:"Asia/Seoul", cat:"城市", icon:"🌉", desc:"汝矣岛一带的汉江 4K 机位，江面、大桥和首尔天际线一起入镜，晚上有整条江的夜景灯光。"},
   {name:"滨海湾天际线", en:"Marina Bay, Singapore", pEn:"Singapore · Marina Bay", dEn:"Marina Bay skyline with a live PSI air-quality readout. Marina Bay Sands, the lotus and the Flyer in one frame.", place:"新加坡 · 滨海湾", lat:1.283, lon:103.860, yt:"y2P7ZERGcb0", tz:"Asia/Singapore", cat:"城市", icon:"🏙️", desc:"滨海湾天际线实况，顺带实时 PSI 空气指标。金沙、莲花和摩天轮都在一个画面里。"},
-  {name:"吉隆坡天际线", en:"KL Skyline", pEn:"Malaysia · Kuala Lumpur", dEn:"KL skyline with lofi audio; the Twin Towers are in frame. (This channel blocks third-party embedding — use the button to watch on YouTube.)", place:"马来西亚 · 吉隆坡", lat:3.157, lon:101.712, yt:"_1tcOO0CKsM", noembed:true, tz:"Asia/Kuala_Lumpur", cat:"城市", icon:"🇲🇾", desc:"吉隆坡市区天际线机位，配 lofi 音乐。双子塔在画面里，马来西亚晚上打开正好是它的白天。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
+  {name:"吉隆坡天际线", en:"KL Skyline", pEn:"Malaysia · Kuala Lumpur", dEn:"KL skyline 24/7 with lofi audio; the Twin Towers are in frame. (This channel blocks third-party embedding — the panel shows its live still; use the button for the real stream.)", place:"马来西亚 · 吉隆坡", lat:3.157, lon:101.712, yt:"4AXzGARKHHE", noembed:true, tz:"Asia/Kuala_Lumpur", cat:"城市", icon:"🇲🇾", desc:"吉隆坡市区天际线机位，配 lofi 音乐，双子塔在画面里。马来西亚晚上打开正好是它的白天。（该频道关闭了第三方嵌入，面板里显示的是它的实时封面，看连续画面点按钮去 YouTube）"},
   {name:"曼谷 · 素坤逸路", en:"Sukhumvit Road, Bangkok", pEn:"Thailand · Bangkok", dEn:"4K on Sukhumvit Soi 11: motorbikes, street stalls, the skytrain crossing. Bangkok's busiest street.", place:"泰国 · 曼谷", lat:13.740, lon:100.562, yt:"UemFRPrl1hk", tz:"Asia/Bangkok", cat:"城市", icon:"🛺", desc:"素坤逸 Soi 11 的 4K 街景机位，摩托车、路边摊和天铁道口，曼谷最忙的一条街。"},
   {name:"雷克雅未克市区", en:"Reykjavik City", pEn:"Iceland · Reykjavík", dEn:"The northernmost capital: colourful houses, the church, and the sea beyond. Weather flips fast.", place:"冰岛 · 雷克雅未克", lat:64.147, lon:-21.940, yt:"tYgGEC-ESTw", tz:"Atlantic/Reykjavik", cat:"城市", icon:"🇮🇸", desc:"世界最北首都的市区实况，彩色房子、教堂和远处的海。天气说变就变，晴天的雷克雅未克很美。"},
   {name:"多伦多 · CN 塔", en:"CN Tower, Toronto", pEn:"Canada · Toronto", dEn:"4K on the CN Tower and Lake Ontario with lofi. Fog and swell off the lake is peak Canadian winter.", place:"加拿大 · 多伦多", lat:43.643, lon:-79.387, yt:"bbjwotvAvDM", tz:"America/Toronto", cat:"城市", icon:"🇨🇦", desc:"CN 塔和安大略湖的 4K 机位，配 lofi。湖面起雾起浪的时候最有加拿大冬天的感觉。"},
@@ -230,7 +236,7 @@ const CAMS = [
   {name:"富埃戈火山", en:"Fuego Volcano", pEn:"Guatemala · Fuego", dEn:"Erupting almost daily — ash plumes and lava flows. Clearest after dark.", place:"危地马拉 · 富埃戈", lat:14.475, lon:-90.880, yt:"cNW2nytVkfs", tz:"America/Guatemala", cat:"自然", icon:"🌋", desc:"几乎天天在喷的火山，火山灰柱和熔岩流是日常。夜里看喷发最清楚。"},
   {name:"珠峰 · Hotel Everest View", en:"Everest Panorama, Nepal", pEn:"Nepal · Solukhumbu · 3,880 m", dEn:"All-sky camera at the hotel: Everest and the Khumbu walls by day, Himalayan stars by night.", place:"尼泊尔 · 索卢昆布 · 海拔 3880 米", lat:27.810, lon:86.710, yt:"EGya8tERDnY", tz:"Asia/Kathmandu", cat:"自然", icon:"🏔️", desc:"海拔 3880 米酒店的全天空机位，白天对着珠峰和昆布里峰的雪壁，夜里换成喜马拉雅星空，云一散就是整片山脊。"},
   {name:"南崎巴札", en:"Namche Bazaar, Nepal", pEn:"Nepal · Solukhumbu · 3,440 m", dEn:"The main supply town on the Everest trail, terraced up the slope below Kongde and Thamserku.", place:"尼泊尔 · 索卢昆布 · 海拔 3440 米", lat:27.804, lon:86.710, yt:"wguWmJnOly8", tz:"Asia/Kathmandu", cat:"自然", icon:"🏘️", desc:"珠峰线路上的补给重镇，房子层层叠在山坡上，背后就是 Kongde 和 Thamserku 的雪壁。这个机位可以直接在网页里播。"},
-  {name:"卢卡拉机场", en:"Lukla Airport", pEn:"Nepal · Solukhumbu · Lukla", dEn:"One of the world's most dangerous airports, gateway to Everest base camp. (This channel blocks embedding — use the button.)", place:"尼泊尔 · 索卢昆布 · 卢卡拉", lat:27.686, lon:86.729, yt:"am9KDRSZQ-0", noembed:true, tz:"Asia/Kathmandu", cat:"自然", icon:"🛫", desc:"世界最危险的机场之一，去珠峰大本营的必经之门。短距起降的小飞机一头扎进喜马拉雅。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
+  {name:"卢卡拉机场", en:"Lukla Airport", pEn:"Nepal · Solukhumbu · Lukla", dEn:"One of the world's most dangerous airports, gateway to Everest base camp. (This channel blocks embedding — the panel shows its live still; use the button for the real stream.)", place:"尼泊尔 · 索卢昆布 · 卢卡拉", lat:27.686, lon:86.729, yt:"am9KDRSZQ-0", noembed:true, tz:"Asia/Kathmandu", cat:"自然", icon:"🛫", desc:"世界最危险的机场之一，去珠峰大本营的必经之门。短距起降的小飞机一头扎进喜马拉雅。（该频道关闭了第三方嵌入，面板里显示的是它的实时封面，看连续画面点按钮去 YouTube）"},
   {name:"艾格峰三山", en:"Eiger, Mönch & Jungfrau", pEn:"Switzerland · Beatenberg", dEn:"Eiger, Mönch and Jungfrau from the Beatenberg chalets, with Lake Thun below. A Swiss postcard.", place:"瑞士 · 贝阿滕贝格", lat:46.700, lon:7.800, yt:"UcfudevG7v8", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"从贝阿滕贝格木屋看艾格、僧侣峰和少女峰三连峰，加上图恩湖。瑞士明信片机位。"},
   {name:"格林德茨山村", en:"Grimentz, Valais", pEn:"Switzerland · Valais · Grindelwald", dEn:"Valais village: chalets, church and alpine slopes. Snow in winter, meadows in summer.", place:"瑞士 · 瓦莱州 · 格林德茨", lat:46.183, lon:7.583, yt:"iCxfe27HpaY", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"瓦莱州山村的机位，木屋、教堂和背后的阿尔卑斯山坡，冬天雪景夏天草甸。"},
   {name:"门登霍尔冰川", en:"Mendenhall Glacier", pEn:"United States · Alaska · Juneau", dEn:"Glacier tongue and slopes outside Juneau; mountain goats wander past. The ice has retreated noticeably.", place:"美国 · 阿拉斯加 · 朱诺", lat:58.440, lon:-134.570, yt:"jJI5w_RVGtQ", tz:"America/Anchorage", cat:"自然", icon:"🏔️", desc:"朱诺郊外的冰川机位，冰川舌和山坡，还会有野山羊路过。冰川这些年退得很明显。"},
@@ -299,6 +305,7 @@ const UI={
     localTime:"当地时间",
     nbTitle:"这个频道关闭了第三方嵌入",
     nbBody:"直接在网页里播放会触发 YouTube 的 Error 153 / 150。点下面的按钮可以在新窗口看完整直播，画质和弹幕都正常。",
+    nbStill:"实时封面 · 约 5 分钟更新",
     nbBtn:"▶ 在 YouTube 观看",
     empty:"没有符合条件的机位，换个筛选试试",
     issLabel:"🛰️ 国际空间站", issSub:"轨道直播 · 不在地球表面",
@@ -322,6 +329,7 @@ const UI={
     localTime:"Local time",
     nbTitle:"This channel blocks third-party embedding",
     nbBody:"Playing it inside a page triggers YouTube error 153 / 150. Use the button below to watch the full stream in a new window.",
+    nbStill:"Live still · refreshes ~5 min",
     nbBtn:"▶ Watch on YouTube",
     empty:"No cameras match these filters — try loosening them",
     issLabel:"🛰️ International Space Station", issSub:"Orbital feed · not on the surface",
@@ -422,8 +430,9 @@ function spin(){ if(spinning && Date.now()-lastTouch>2500 && !player.classList.c
 document.getElementById("spinBtn").onclick=e=>{ spinning=!spinning; e.target.textContent = spinning?L("spinPause"):L("spinRun"); };
 
 const player=document.getElementById("player"), frame=document.getElementById("frame"), vempty=document.getElementById("vempty");
+const noposter=document.getElementById("noposter"), ytPoster=document.getElementById("ytPoster");
 const vid=document.getElementById("vid"), snap=document.getElementById("snap");
-let current=null, clockTimer=null, hls=null, snapTimer=null;
+let current=null, clockTimer=null, hls=null, snapTimer=null, ytTimer=null;
 
 /* 本地 file:// 打开时浏览器没有 origin 可发，YouTube 播放器必然报 Error 153，这里明确提示，避免误判成站点坏了 */
 if(location.protocol==="file:"){
@@ -449,6 +458,8 @@ function embedUrl(cam){
 function stopMedia(){
   if(hls){ try{hls.destroy();}catch(e){} hls=null; }
   clearInterval(snapTimer); snapTimer=null;
+  clearInterval(ytTimer); ytTimer=null;
+  noposter.style.display="none"; ytPoster.removeAttribute("src");
   try{ vid.pause(); vid.removeAttribute("src"); vid.load(); }catch(e){}
   frame.removeAttribute("src");
   frame.style.display="none"; vid.style.display="none"; snap.style.display="none";
@@ -492,12 +503,24 @@ function renderPlayerTexts(){
   if(cam.noembed) showNoEmbed(cam);
 }
 function showNoEmbed(cam){
-  vempty.style.display="flex";
-  vempty.innerHTML='<div style="max-width:360px;line-height:1.75"><div style="font-size:32px;margin-bottom:10px">🚫</div>'
-    +'<div style="color:#d7e6ff;font-size:14px;font-weight:600;margin-bottom:8px">'+L("nbTitle")+'</div>'
-    +'<div style="font-size:12.5px;color:#8fa8cc;margin-bottom:16px">'+L("nbBody")+'</div>'
-    +'<button id="noembedGo" style="cursor:pointer;border:0;border-radius:999px;padding:10px 22px;background:#e5484d;color:#fff;font-size:13px;font-weight:600">'+L("nbBtn")+'</button></div>';
-  document.getElementById("noembedGo").onclick=()=>window.open("https://www.youtube.com/watch?v="+cam.yt,"_blank");
+  const id=cam.yt||"";
+  vempty.style.display="none";
+  noposter.style.display="block";
+  document.getElementById("noposterTxt").textContent=L("nbStill");
+  const btn=document.getElementById("noembedGo");
+  btn.textContent=L("nbBtn");
+  btn.onclick=()=>window.open("https://www.youtube.com/watch?v="+id,"_blank");
+  /* YouTube 的 i.ytimg.com 完全没有防盗链：不带 Referer、file:// 打开都能取到图。
+     maxresdefault_live 是当前直播帧，官方 CDN 缓存 5 分钟，比 B 站 keyframe 慢，但足够当封面。 */
+  const chain=["maxresdefault_live","hqdefault_live","hqdefault"];
+  const load=()=>{
+    let i=0;
+    const next=()=>{ if(i>=chain.length) return; ytPoster.src="https://i.ytimg.com/vi/"+id+"/"+chain[i++]+".jpg?t="+Date.now(); };
+    ytPoster.onerror=()=>next();
+    next();
+  };
+  load();
+  clearInterval(ytTimer); ytTimer=setInterval(load,120000);
 }
 function openCam(cam, fly=true){
   current=cam; stopMedia(); markSelected(cam);
