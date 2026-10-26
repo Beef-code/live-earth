@@ -338,6 +338,15 @@ const CAMS = [
   {name:"威尼斯 · 运河与巷子", en:"Venice · Canals & Alleyways", pEn:"Italy · Venice", dEn:"A recorded first-person walking tour — a moving POV, not a fixed camera. Venice from the Rialto into the back alleys — no narration, just water and footsteps. Recorded.", place:"意大利 · 威尼斯", lat:45.438, lon:12.3358, yt:"0txBFbAuhLY", tz:"Europe/Rome", cat:"漫游", walk:true, tod:"day", season:"winter", len:"1:00:49", icon:"🚶", desc:"步行漫游录播。全球各地的第一视角走路实拍，不是固定机位。威尼斯从里亚托桥走进小巷，没有解说，只有水声和脚步。录播。"},
   {name:"维也纳 · 老城", en:"Vienna · Old Town", pEn:"Austria · Vienna", dEn:"A recorded first-person walking tour — a moving POV, not a fixed camera. Vienna's old town — the palace, fiacres and cobbles. Recorded.", place:"奥地利 · 维也纳", lat:48.2082, lon:16.3738, yt:"AtMIW72481c", tz:"Europe/Vienna", cat:"漫游", walk:true, tod:"day", season:"autumn", len:"1:01:57", icon:"🚶", desc:"步行漫游录播。全球各地的第一视角走路实拍，不是固定机位。维也纳老城，皇宫、马车和石板路。录播。"},
   {name:"苏黎世 · 班霍夫大街", en:"Zurich · Bahnhofstrasse", pEn:"Switzerland · Zurich", dEn:"A recorded first-person walking tour — a moving POV, not a fixed camera. Zurich in summer, Bahnhofstrasse down to the lake. Recorded.", place:"瑞士 · 苏黎世", lat:47.3769, lon:8.5417, yt:"kxmdY81Am08", tz:"Europe/Zurich", cat:"漫游", walk:true, tod:"day", season:"summer", len:"1:00:57", icon:"🚶", desc:"步行漫游录播。全球各地的第一视角走路实拍，不是固定机位。苏黎世夏日，班霍夫大街一路走到湖边。录播。"},
+
+  {name:"南极 · 戴维斯站", en:"Davis Station, Antarctica", pEn:"Antarctica · Davis Station", dEn:"Australian Antarctic Division webcam on the Ingrid Christensen Coast. A new still every 10 minutes; in October the sun is already up most of the day.", place:"南极洲 · 戴维斯站", lat:-68.5766, lon:77.9675, type:"img", srcTpl:"https://images.antarctica.gov.au/webcams/davis/{Y}/{M}/{D}/D{DD}{MM}{YY}{HH}{NN}s.jpg", tplStep:5, page:"https://www.antarctica.gov.au/antarctic-operations/webcams/davis/", refresh:300, tz:"Antarctica/Davis", cat:"自然", icon:"🧊", desc:"澳大利亚南极局在英格丽德·克里斯滕森海岸的官方相机，每 10 分钟出一张新图。10 月南极已经进入极昼，太阳整天不落。不是视频，是定时更新的实拍。"},
+  {name:"南极 · 凯西站", en:"Casey Station, Antarctica", pEn:"Antarctica · Casey Station", dEn:"Australian Antarctic Division webcam at Casey, on the Budd Coast. Nearby moss beds earn the area the nickname 'the Daintree of Antarctica'.", place:"南极洲 · 凯西站", lat:-66.2825, lon:110.5296, type:"img", srcTpl:"https://images.antarctica.gov.au/webcams/casey/{Y}/{M}/{D}/C{DD}{MM}{YY}{HH}{NN}s.jpg", tplStep:3, page:"https://www.antarctica.gov.au/antarctic-operations/webcams/casey/", refresh:180, tz:"Antarctica/Casey", cat:"自然", icon:"🧊", desc:"澳大利亚凯西站的官方相机，位于巴德海岸。这一带长着南极少见的茂密苔藓床，得了个外号叫「南极的戴恩树」。每 10 分钟换一张图。"},
+  {name:"南极 · 莫森站", en:"Mawson Station, Antarctica", pEn:"Antarctica · Mawson Station", dEn:"The oldest continuously operating station south of the Antarctic Circle, on Mac.Robertson Land. Horseshoe Harbour and the Framnes Mountains behind.", place:"南极洲 · 莫森站", lat:-67.6027, lon:62.8738, type:"img", srcTpl:"https://images.antarctica.gov.au/webcams/mawson/{Y}/{M}/{D}/M{DD}{MM}{YY}{HH}{NN}s.jpg", tplStep:5, page:"https://www.antarctica.gov.au/antarctic-operations/webcams/mawson/", refresh:300, tz:"Antarctica/Mawson", cat:"自然", icon:"🧊", desc:"南极圈以南连续运转最久的考察站，在麦克罗伯逊地。画面里是马蹄港和背后的弗拉姆内斯山，风大的时候雪被吹成横向的白线。每 10 分钟一张。"},
+  {name:"巴拿马运河 · 米拉弗洛雷斯船闸", en:"Panama Canal · Miraflores Locks", pEn:"Panama · Panama Canal", dEn:"Panama Canal Authority HD camera on the Pacific-side locks. Two chambers lift ships 16.5 m up to Gatun Lake — busiest at dawn and dusk.", place:"巴拿马 · 巴拿马运河", lat:8.9973, lon:-79.5941, type:"img", src:"https://webcams.delcanal.com/hd-miraflores.jpg", page:"https://multimedia.panama-canal.com/Webcams/miraflores.html", refresh:20, tz:"America/Panama", cat:"水乡", icon:"🚢", desc:"巴拿马运河管理局的 1080p 官方相机，太平洋一侧的米拉弗洛雷斯双级船闸。船在这里被抬升 16.5 米进入加通湖。约 20 秒换一张，等一会儿就有巨轮进出。"},
+  {name:"塞伦盖蒂 · 草原", en:"Serengeti Plains", pEn:"Tanzania · Serengeti", dEn:"Africam's camera on the Serengeti plain — lion, elephant, giraffe and zebra cross in front of it depending on the hour.", place:"坦桑尼亚 · 塞伦盖蒂", lat:-2.3333, lon:34.8333, yt:"BmOLK7LTKbY", tz:"Africa/Dar_es_Salaam", cat:"野生动物", icon:"🦁", desc:"Africam 架在塞伦盖蒂草原上的固定机位。狮群、大象、长颈鹿、斑马轮流从画面前走过，清晨和黄昏最热闹。直播。"},
+  {name:"马拉河 · 角马渡口", en:"Mara River Crossing", pEn:"Tanzania · Mara River", dEn:"The main crossing point on the Mara River. July to October the wildebeest herds pile up on the bank and go — it can take hours of waiting for thirty seconds of chaos.", place:"坦桑尼亚 · 马拉河", lat:-1.4833, lon:35.0167, yt:"BaEFc79IMCA", tz:"Africa/Dar_es_Salaam", cat:"野生动物", icon:"🦬", desc:"马拉河主渡口的固定机位。每年 7 到 10 月角马群在岸边越挤越多，然后突然冲下去——等了几个小时，就为那几十秒。直播。"},
+  {name:"乔贝 · 塞尼亚蒂水塘", en:"Senyati Waterhole, Chobe", pEn:"Botswana · Chobe", dEn:"A waterhole in northern Botswana where elephant herds come down to drink in the dry season — sometimes a hundred at once.", place:"博茨瓦纳 · 乔贝", lat:-17.8167, lon:25.1500, yt:"EdDdTrahHjI", tz:"Africa/Gaborone", cat:"野生动物", icon:"🐘", desc:"博茨瓦纳北部乔贝的水塘机位。旱季象群会成批下来喝水，多的时候一次上百头，喝完就地打滚降温。直播。"},
+  {name:"安博塞利 · 乞力马扎罗", en:"Amboseli · Kilimanjaro", pEn:"Kenya · Amboseli", dEn:"A waterhole in Amboseli with Kilimanjaro behind it — the postcard shot of Kenya. Clearest early morning before the cloud builds on the summit.", place:"肯尼亚 · 安博塞利", lat:-2.6527, lon:37.2594, yt:"XyPU5-pNg5E", tz:"Africa/Nairobi", cat:"野生动物", icon:"🏔️", desc:"安博塞利的水塘机位，背后就是乞力马扎罗。这是肯尼亚最经典的一张明信片构图。清晨山顶云还没起来的时候最清楚，大象常在水塘边成群。直播。"},
 ];
 
 const CATS = {"城市":"#ff9f43","水乡":"#54c8ff","自然":"#7bed6d","野生动物":"#ffd32a","星空":"#b39dff","太空":"#ff7eb6","漫游":"#23e0c8"};
@@ -603,6 +612,25 @@ if(location.protocol==="file:"){
   document.body.style.paddingTop="46px";
 }
 
+// 有些官方站点的快照地址里带着时间戳（澳洲南极局按固定间隔出一张，路径含 UTC 年月日时分）。
+// 这类机位写 srcTpl 模板而不是固定 src，每次取图时按当前 UTC 推算出最近一张。
+// 各站出图间隔不一样（Davis/Mawson 每 5 分钟、Casey 每 3 分钟），所以用 tplStep 指定并按 epoch 对齐。
+// step 是回退格数：算出来的那一格可能还没生成，加载失败就再往前退一格。
+function tplUrl(tpl, step, gran){
+  const g = (gran || 10) * 60000;
+  const ms = Date.now() - g * (1 + (step || 0));
+  const d = new Date(ms - (ms % g));
+  const p = n => String(n).padStart(2, "0");
+  return tpl
+    .replace(/\{YY\}/g, p(d.getUTCFullYear() % 100))
+    .replace(/\{Y\}/g,  String(d.getUTCFullYear()))
+    .replace(/\{MM\}/g, p(d.getUTCMonth()+1))
+    .replace(/\{M\}/g,  String(d.getUTCMonth()+1))
+    .replace(/\{DD\}/g, p(d.getUTCDate()))
+    .replace(/\{D\}/g,  String(d.getUTCDate()))
+    .replace(/\{HH\}/g, p(d.getUTCHours()))
+    .replace(/\{NN\}/g, p(d.getUTCMinutes()));
+}
 function camType(cam){ return cam.type || (cam.yt||cam.channel ? "yt" : ""); }
 function embedUrl(cam){
   if(cam.yt) return "https://www.youtube.com/embed/"+cam.yt+"?autoplay=1&mute=1&rel=0&playsinline=1";
@@ -695,10 +723,18 @@ function openCam(cam, fly=true){
     else { vempty.style.display="flex"; vempty.textContent=L("noHls"); }
   } else if(t==="img"||t==="sgapi"){
     snap.style.display="block";
+    let step=0;
     const load=()=>{
       if(t==="sgapi"){
         fetch(cam.api).then(r=>r.json()).then(d=>{ const c=(d.items[0].cameras||[]).find(x=>x.camera_id===cam.camId); if(c) snap.src=c.image; }).catch(()=>{});
-      } else { snap.src=cam.src+(cam.src.includes("?")?"&":"?")+"t="+Date.now(); }
+      } else if(cam.srcTpl){
+        step=0;
+        snap.onerror=()=>{ if(step<5){ step++; snap.src=tplUrl(cam.srcTpl,step,cam.tplStep); } };
+        snap.src=tplUrl(cam.srcTpl,0,cam.tplStep);
+      } else {
+        snap.onerror=()=>{ setTimeout(()=>{ snap.src=cam.src+(cam.src.includes("?")?"&":"?")+"t="+Date.now(); }, 2500); };
+        snap.src=cam.src+(cam.src.includes("?")?"&":"?")+"t="+Date.now();
+      }
     };
     load(); snapTimer=setInterval(load,(cam.refresh||60)*1000);
   }

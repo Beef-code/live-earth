@@ -14,13 +14,13 @@ Everything lives in one `index.html`. No build step, no `npm install`, no backen
 
 - **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
 - **Country borders** — one thin white line over the imagery, toggleable from the top bar. **China uses the AMap / DataV standard boundary** (Taiwan, the South China Sea islands and the nine-dash line are all included); every other country comes from Natural Earth 110m. The two disputed segments Natural Earth draws inside Chinese territory — Aksai Chin and the McMahon line — are dropped entirely, so the China line is only ever the standard one
-- **217 cameras, two ways to watch** — 148 fixed live cams (city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station) plus **69 recorded walking tours**, one per city
+- **225 cameras, two ways to watch** — 156 fixed live cams (city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station, Antarctic research stations, the Panama Canal) plus **69 recorded walking tours**, one per city
 - **Five source types, auto-detected** — YouTube live embeds, YouTube walking-tour videos, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
 - **The sidebar is two levels deep** — the top selector is **viewing type**: 📡 **fixed live cam** (148 cameras showing right now) or 🚶 **walking tour** (69 recordings where someone already walked the street for you). Those two are parallel ways of watching, not categories. Under fixed live cams you narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API) and subject (city / coast / nature / wildlife / night sky / space); **day vs night** and **spring / summer / autumn / winter / tropics** belong to walking tours alone and do not appear at all when a fixed cam type is selected. Switching type clears filters from the other branch, and every dropdown counts against the selected type — no "5 listed, 0 found". The pins on the globe are filtered along with the list
 - **Bilingual, 中文 / English** — one toggle in the top-right corner, remembered across visits; every camera carries both languages
 - **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
-By category: cities 57 · coast & water 29 · nature 32 · wildlife 18 · night sky 8 · space 4 · **walking tours 69** (55 day / 14 night, 50 countries)
+By category: cities 57 · coast & water 30 · nature 35 · wildlife 22 · night sky 8 · space 4 · **walking tours 69** (55 day / 14 night). Together they span **73 countries and territories**, Antarctica included
 
 Walking tours by season: spring 7 · summer 18 · autumn 27 · winter 10 · tropics (no seasons) 7
 
@@ -56,6 +56,8 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 | `type` | source | `hls` / `img` / `sgapi`. Defaults to YouTube when omitted |
 | `src` | source | `.m3u8` URL for `hls`; image URL for `img` |
 | `refresh` | optional | Snapshot refresh interval in seconds, default 60 |
+| `srcTpl` | `img` only | For sites whose snapshot URL **contains a timestamp**. Write a template instead of `src`, e.g. the Australian Antarctic Division `.../{Y}/{M}/{D}/D{DD}{MM}{YY}{HH}{NN}s.jpg`. Substituted against current UTC: `{Y}` 4-digit year, `{YY}` 2-digit year, `{M}`/`{MM}` month, `{D}`/`{DD}` day, `{HH}` hour, `{NN}` minute |
+| `tplStep` | with `srcTpl` | That station's **publish interval in minutes**. It differs per station (Davis/Mawson every 5, Casey every 3). Used to align to the newest frame; if that frame isn't up yet the loader steps back one more, up to 5 frames |
 | `page` | optional | Original page, used by the "Open at source" button |
 | `bili` | optional | Bilibili room id. Marks the camera as Bilibili in the source filter and keeps its keyframe on a 30 s refresh |
 | `noembed` | optional | `true` = channel blocks third-party embedding. Skips the iframe and shows a direct link instead |
