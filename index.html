@@ -355,15 +355,16 @@ const UI={
   zh:{
     h1:"🌍 直播地球",
     docTitle:"直播地球 · 世界风景直播",
-    tagline:"点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 步行漫游录播 + 开放直连流 + 官方快照，开放的都收",
+    tagline:"两类看点：定点直播看此时此刻，步行漫游替你走一遍那条街 · 昼夜与四季只属于漫游",
     spinPause:"⏸ 暂停自转", spinRun:"▶ 继续自转", random:"🎲 随机飞一个",
     borders:"🗺 边界", bordersTip:"显示 / 隐藏国家边界（中国国界采用国家标准数据）",
     srcLabel:"来源", all:"全部", hlsShort:"直连流", snapShort:"快照", apiShort:"开放 API", biliShort:"B 站慢直播", badgeBili:"📺 B 站 24h 直播",
     countryLabel:"国家 / 地区", anyCountry:"全部国家", catLabel:"类型", anyCat:"全部类型",
+    kindLabel:"观赏类型", kindAll:"两类都看", kindLive:"📡 定点直播", kindWalk:"🚶 步行漫游",
     todLabel:"漫游时段", anyTod:"白天 + 夜晚", todDay:"☀️ 白天漫游", todNight:"🌙 夜间漫游",
     seasonLabel:"漫游季节", anySeason:"四季全看",
     seasonSpring:"🌸 春天", seasonSummer:"🌞 夏天", seasonAutumn:"🍂 秋天", seasonWinter:"❄️ 冬天", seasonTropics:"🌴 热带（无四季）",
-    badgeWalk:"🎬 步行漫游 · 录播", walkOnly:"只看漫游",
+    badgeWalk:"🎬 步行漫游 · 录播",
     count:"全部机位", unit:"个",
     hint:"拖动转地球 · 滚轮缩放 · 点光点看直播",
     pick:"选一个点，这里就会播那里的直播",
@@ -384,15 +385,16 @@ const UI={
   en:{
     h1:"🌍 Live Earth",
     docTitle:"Live Earth · World Live Cams",
-    tagline:"Click a dot on the globe and watch that place right now · YouTube live, recorded walking tours, open HLS streams and official snapshots — everything that is open",
+    tagline:"Two ways to watch: a fixed camera shows right now, a walking tour walks the street for you · day/night and seasons belong to walks alone",
     spinPause:"⏸ Stop rotation", spinRun:"▶ Resume rotation", random:"🎲 Surprise me",
     borders:"🗺 Borders", bordersTip:"Show / hide national borders (China drawn from the national standard dataset)",
     srcLabel:"SOURCE", all:"All", hlsShort:"HLS", snapShort:"Snapshot", apiShort:"Open API", biliShort:"Bilibili 24/7", badgeBili:"📺 Bilibili 24/7",
     countryLabel:"COUNTRY / REGION", anyCountry:"All countries", catLabel:"CATEGORY", anyCat:"All categories",
+    kindLabel:"VIEWING TYPE", kindAll:"Both types", kindLive:"📡 Fixed live cam", kindWalk:"🚶 Walking tour",
     todLabel:"WALK TIME", anyTod:"Day + night", todDay:"☀️ Day walk", todNight:"🌙 Night walk",
     seasonLabel:"WALK SEASON", anySeason:"All seasons",
     seasonSpring:"🌸 Spring", seasonSummer:"🌞 Summer", seasonAutumn:"🍂 Autumn", seasonWinter:"❄️ Winter", seasonTropics:"🌴 Tropics (no seasons)",
-    badgeWalk:"🎬 Walking tour · recorded", walkOnly:"Walking tours only",
+    badgeWalk:"🎬 Walking tour · recorded",
     count:"All cameras", unit:"",
     hint:"Drag to spin · scroll to zoom · click a dot to watch",
     pick:"Pick a dot and this is where its live feed will play",
@@ -454,8 +456,12 @@ const COUNTRY_LIST=(function(){
 })();
 const countryName=o=>isZh()?o.zh:o.en;
 
-const F={src:"all", ctry:"all", cat:"all", tod:"all", season:"all"};
+/* 两大观赏类型：定点直播（固定机位）与步行漫游（录播、移动视角）。
+   昼夜和季节只属于步行漫游，所以 kind 是一切筛选的上层。 */
+const F={kind:"all", src:"all", ctry:"all", cat:"all", tod:"all", season:"all"};
 function matchCam(c){
+  if(F.kind==="walk" && !c.walk) return false;
+  if(F.kind==="live" && c.walk) return false;
   if(F.src!=="all" && srcOf(c)!==F.src) return false;
   if(F.cat!=="all" && c.cat!==F.cat) return false;
   if(F.ctry!=="all" && c.__cc.indexOf(F.ctry)<0) return false;
@@ -715,42 +721,64 @@ function renderList(){
   window.__allow=new Set(arr.map(c=>c.name));
   if(window.__applyCull) window.__applyCull();
 
-  const srcCount={}; CAMS.forEach(c=>{ const k=srcOf(c); srcCount[k]=(srcCount[k]||0)+1; });
-  const srcOpts=[["all",L("all"),CAMS.length],["yt","YouTube",srcCount.yt||0],["bili",L("biliShort"),srcCount.bili||0],
+  /* 两大观赏类型在上层，其余所有筛选的计数都以当前类型为分母，避免「写着 5 条、筛出来 0 条」 */
+  const basePool = CAMS.filter(c=> F.kind==="all" ? true : (F.kind==="walk" ? !!c.walk : !c.walk));
+  const nLive=CAMS.filter(c=>!c.walk).length, nWalkN=CAMS.filter(c=>c.walk).length;
+  const kindOpts=[["all",L("kindAll"),CAMS.length],["live",L("kindLive"),nLive],["walk",L("kindWalk"),nWalkN]]
+    .map(o=>'<option value="'+o[0]+'"'+(F.kind===o[0]?" selected":"")+'>'+o[1]+' ('+o[2]+')</option>').join("");
+  const showLive = F.kind!=="walk";   // 来源 / 题材：定点直播才有
+  const showWalk = F.kind!=="live";   // 昼夜 / 季节：只有步行漫游才有
+
+  const srcCount={}; basePool.forEach(c=>{ const k=srcOf(c); srcCount[k]=(srcCount[k]||0)+1; });
+  const srcOpts=[["all",L("all"),basePool.length],["yt","YouTube",srcCount.yt||0],["bili",L("biliShort"),srcCount.bili||0],
                  ["hls",L("hlsShort"),srcCount.hls||0],["img",L("snapShort"),srcCount.img||0],["sgapi",L("apiShort"),srcCount.sgapi||0]];
   const srcHtml=srcOpts.map(o=>'<option value="'+o[0]+'"'+(F.src===o[0]?" selected":"")+'>'+o[1]+' ('+o[2]+')</option>').join("");
-  const ctryOpts=['<option value="all">'+L("anyCountry")+' · '+CAMS.length+'</option>']
-    .concat(COUNTRY_LIST.map(o=>'<option value="'+o.zh+'"'+(F.ctry===o.zh?" selected":"")+'>'+countryName(o)+' ('+o.n+')</option>'));
+  const ctryOpts=['<option value="all">'+L("anyCountry")+' · '+basePool.length+'</option>']
+    .concat(COUNTRY_LIST.map(o=>'<option value="'+o.zh+'"'+(F.ctry===o.zh?" selected":"")+'>'+countryName(o)
+      +' ('+basePool.filter(c=>c.__cc.indexOf(o.zh)>=0).length+')</option>'));
+  /* 类型（题材）只对定点直播有意义；「漫游」在这里不是题材，是另一大类型，选中「仅漫游」时整块不出现 */
+  const catKeys=Object.keys(CATS).filter(k=> !(F.kind==="live" && k==="漫游"));
   const catOpts=['<option value="all">'+L("anyCat")+'</option>']
-    .concat(Object.keys(CATS).map(k=>'<option value="'+k+'"'+(F.cat===k?" selected":"")+'>'+catName({cat:k})+' ('+CAMS.filter(c=>c.cat===k).length+')</option>'));
-  const nDay=CAMS.filter(c=>c.tod==="day").length, nNight=CAMS.filter(c=>c.tod==="night").length;
+    .concat(catKeys.map(k=>'<option value="'+k+'"'+(F.cat===k?" selected":"")+'>'+catName({cat:k})+' ('+basePool.filter(c=>c.cat===k).length+')</option>'));
+  const nDay=basePool.filter(c=>c.tod==="day").length, nNight=basePool.filter(c=>c.tod==="night").length;
   const todOpts=[["all",L("anyTod"),nDay+nNight],["day",L("todDay"),nDay],["night",L("todNight"),nNight]]
     .map(o=>'<option value="'+o[0]+'"'+(F.tod===o[0]?" selected":"")+'>'+o[1]+' ('+o[2]+')</option>').join("");
-  const nWalk=CAMS.filter(c=>c.walk).length;
+  const nWalk=basePool.filter(c=>c.walk).length;
   const seaOpts=[["all",L("anySeason"),nWalk]]
-    .concat(SEASONS.map(k=>[k,L(SEASON_KEY[k]),CAMS.filter(c=>c.season===k).length]))
+    .concat(SEASONS.map(k=>[k,L(SEASON_KEY[k]),basePool.filter(c=>c.season===k).length]))
     .map(o=>'<option value="'+o[0]+'"'+(F.season===o[0]?" selected":"")+'>'+o[1]+' ('+o[2]+')</option>').join("");
 
   list.innerHTML =
     '<div id="filters">'
-    + '<div class="flabel">'+L("srcLabel")+'</div>'
-    + '<div class="frow"><select data-sel="src">'+srcHtml+'</select></div>'
+    + '<div class="flabel">'+L("kindLabel")+'</div>'
+    + '<div class="frow"><select data-sel="kind">'+kindOpts+'</select></div>'
     + '<div class="flabel">'+L("countryLabel")+'</div>'
     + '<div class="frow"><select data-sel="ctry">'+ctryOpts.join("")+'</select></div>'
-    + '<div class="flabel">'+L("catLabel")+'</div>'
-    + '<div class="frow"><select data-sel="cat">'+catOpts.join("")+'</select></div>'
-    + (nDay+nNight ? '<div class="flabel">'+L("todLabel")+'</div>'
-    + '<div class="frow"><select data-sel="tod">'+todOpts+'</select></div>' : '')
-    + (nWalk ? '<div class="flabel">'+L("seasonLabel")+'</div>'
-    + '<div class="frow"><select data-sel="season">'+seaOpts+'</select></div>' : '')
+    + (showLive ? '<div class="flabel">'+L("srcLabel")+'</div>'
+      + '<div class="frow"><select data-sel="src">'+srcHtml+'</select></div>'
+      + '<div class="flabel">'+L("catLabel")+'</div>'
+      + '<div class="frow"><select data-sel="cat">'+catOpts.join("")+'</select></div>' : '')
+    + (showWalk ? '<div class="flabel">'+L("todLabel")+'</div>'
+      + '<div class="frow"><select data-sel="tod">'+todOpts+'</select></div>'
+      + '<div class="flabel">'+L("seasonLabel")+'</div>'
+      + '<div class="frow"><select data-sel="season">'+seaOpts+'</select></div>' : '')
     + '</div>'
     + '<div class="hd">'+L("count")+' · '+arr.length+(isZh()?" 个":"")+'</div>';
 
   if(!arr.length){ const e=document.createElement("div"); e.className="empty"; e.textContent=L("empty"); list.appendChild(e); }
 
-  list.querySelector('[data-sel="src"]').onchange=e=>{ F.src=e.target.value; renderList(); };
+  /* 切换观赏类型时，把上一层不再适用的筛选清掉，否则会筛出 0 条 */
+  list.querySelector('[data-sel="kind"]').onchange=e=>{
+    F.kind=e.target.value;
+    if(F.kind==="walk"){ F.src="all"; F.cat="all"; }
+    if(F.kind==="live"){ F.tod="all"; F.season="all"; if(F.cat==="漫游") F.cat="all"; }
+    renderList();
+  };
   list.querySelector('[data-sel="ctry"]').onchange=e=>{ F.ctry=e.target.value; renderList(); };
-  list.querySelector('[data-sel="cat"]').onchange=e=>{ F.cat=e.target.value; renderList(); };
+  const srcSel=list.querySelector('[data-sel="src"]');
+  if(srcSel) srcSel.onchange=e=>{ F.src=e.target.value; renderList(); };
+  const catSel=list.querySelector('[data-sel="cat"]');
+  if(catSel) catSel.onchange=e=>{ F.cat=e.target.value; renderList(); };
   const todSel=list.querySelector('[data-sel="tod"]');
   if(todSel) todSel.onchange=e=>{ F.tod=e.target.value; renderList(); };
   const seaSel=list.querySelector('[data-sel="season"]');
