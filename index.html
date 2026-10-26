@@ -29,16 +29,27 @@
   .cam-label{position:absolute;left:34px;top:50%;transform:translateY(-50%);white-space:nowrap;background:rgba(5,12,26,.82);border:1px solid rgba(140,180,255,.3);padding:3px 8px;border-radius:6px;font-size:11.5px;color:#eaf2ff;opacity:0;pointer-events:none;transition:opacity .15s}
   .cam-dot:hover .cam-label{opacity:1}
   /* 左侧列表 */
-  #list{position:absolute;left:14px;top:86px;bottom:16px;width:212px;z-index:4;display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding-right:2px;scrollbar-width:thin}
+  #list{position:absolute;left:14px;top:86px;bottom:16px;width:250px;z-index:4;display:flex;flex-direction:column;gap:6px;overflow-y:auto;padding-right:2px;scrollbar-width:thin}
   #list .item{text-align:left;border-radius:10px;padding:8px 11px;background:rgba(8,18,38,.72);border:1px solid rgba(120,160,230,.22);color:#dbe9ff;backdrop-filter:blur(6px)}
   #list .item b{display:block;font-size:13px;font-weight:600}
   #list .item span{font-size:11px;color:#93a9cc}
   #list .item.active{border-color:#ffb340;background:rgba(50,32,4,.75)}
   #list .hd{font-size:11px;color:#8fa8cc;letter-spacing:.15em;margin:2px 2px 0}
+  /* 筛选区 */
+  #filters{position:sticky;top:0;z-index:2;display:flex;flex-direction:column;gap:5px;padding:0 0 6px;background:linear-gradient(180deg,rgba(4,7,13,.96) 70%,rgba(4,7,13,0));backdrop-filter:blur(4px)}
+  #filters .flabel{font-size:10px;color:#7f96b8;letter-spacing:.16em;margin:1px 0 -1px 2px}
+  #filters .frow{display:flex;gap:5px;flex-wrap:wrap}
+  #filters .chip{cursor:pointer;border:1px solid rgba(120,160,230,.26);background:rgba(8,18,38,.72);color:#c2d4ef;border-radius:999px;padding:4px 9px;font-size:11px;backdrop-filter:blur(6px)}
+  #filters .chip:hover{border-color:#6db3ff;color:#fff}
+  #filters .chip.on{border-color:#6db3ff;background:rgba(22,64,124,.9);color:#fff;font-weight:600}
+  #filters select{width:100%;cursor:pointer;background:rgba(8,18,38,.92);color:#cfe0ff;border:1px solid rgba(120,160,230,.26);border-radius:8px;padding:5px 7px;font-size:11.5px;font-family:inherit}
+  #filters select:focus{outline:1px solid #6db3ff}
+  #list .empty{font-size:11.5px;color:#8fa8cc;padding:10px 4px;line-height:1.6}
+  #langBtn{min-width:46px;font-weight:600}
   /* 播放面板 */
   #player{position:absolute;right:14px;top:86px;width:min(520px,calc(100vw - 28px));z-index:6;background:rgba(6,13,28,.92);border:1px solid rgba(140,180,255,.35);border-radius:14px;overflow:hidden;backdrop-filter:blur(10px);transform:translateX(115%);transition:transform .35s cubic-bezier(.2,.8,.25,1);box-shadow:0 18px 50px rgba(0,0,0,.6)}
   /* 放大模式：盖住整个地球，只给左侧列表留出位置 */
-  #player.max{left:236px;top:0;bottom:0;right:0;width:auto;border-radius:0;display:flex;flex-direction:column}
+  #player.max{left:272px;top:0;bottom:0;right:0;width:auto;border-radius:0;display:flex;flex-direction:column}
   #player.max .vwrap{padding-top:0;flex:1 1 auto}
   #player.max .meta{flex-shrink:0}
   #player.open{transform:none}
@@ -65,10 +76,11 @@
 
 <header>
   <div class="brand">
-    <h1>🌍 直播地球</h1>
-    <p>点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 开放直连流 + 官方快照，开放的都收</p>
+    <h1 id="brandH1">🌍 直播地球</h1>
+    <p id="brandP">点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 开放直连流 + 官方快照，开放的都收</p>
   </div>
   <div class="tools">
+    <button id="langBtn" title="中文 / English">EN</button>
     <button id="spinBtn">⏸ 暂停自转</button>
     <button id="randomBtn">🎲 随机飞一个</button>
   </div>
@@ -103,148 +115,241 @@
    lat/lon 是经纬度，tz 是当地时区（写错只是时钟不对）
    ============================================================ */
 const CAMS = [
-  {name:"涩谷十字路口", en:"Shibuya Crossing", place:"日本 · 东京", lat:35.6595, lon:139.7005, yt:"dfVK7ld38Ys", tz:"Asia/Tokyo", cat:"城市", icon:"🚥", desc:"全世界最有名的十字路口，高峰时一次绿灯几千人同时过马路。晚上霓虹最热闹。"},
-  {name:"东京湾 · 彩虹大桥", en:"Tokyo Bay", place:"日本 · 东京", lat:35.636, lon:139.77, yt:"_k-5U7IeK8g", tz:"Asia/Tokyo", cat:"城市", icon:"🌉", desc:"Tokyo Views 频道的固定机位，看彩虹大桥和东京湾，夜里桥会亮灯，适合当背景放着。"},
-{name:"威尼斯大运河", en:"Grand Canal, Venice", place:"意大利 · 威尼斯", lat:45.437, lon:12.335, yt:"r8N6IsoIkTk", tz:"Europe/Rome", cat:"水乡", icon:"🛶", desc:"I Love You Venice 的 4K 机位，从 Povoledo 餐厅露台看大运河，贡多拉和水上巴士来来往往。"},
-  {name:"伦敦 · 修道院路斑马线", en:"Abbey Road Crossing", place:"英国 · 伦敦", lat:51.532, lon:-0.177, yt:"zMCea32gpmg", tz:"Europe/London", cat:"城市", icon:"🎸", desc:"披头士《Abbey Road》封面那条斑马线，EarthCam 机位。全天都有游客摆同款姿势拍照。"},
-  {name:"夏威夷 · 冒纳凯阿星空", en:"Mauna Kea StarCam", place:"美国 · 夏威夷", lat:19.826, lon:-155.471, yt:"Q3UhCgsWDw8", tz:"Pacific/Honolulu", cat:"星空", icon:"🔭", desc:"CFHT 天文台的 4K 星空相机，海拔 4200 米。白天看云海和望远镜圆顶，夜里银河、流星全靠它，马来西亚晚上正好是它那边夜里。"},
-  {name:"基拉韦厄火山", en:"Kilauea Volcano", place:"美国 · 夏威夷", lat:19.406, lon:-155.283, yt:"gXKuUyKt8mc", tz:"Pacific/Honolulu", cat:"自然", icon:"🌋", desc:"USGS 的火山口机位。喷发期能看到熔岩，平时是火山口和蒸汽。"},
-  {name:"纽约 · 时代广场", en:"Times Square", place:"美国 · 纽约", lat:40.758, lon:-73.9855, yt:"JQ_jwk_7OVE", tz:"America/New_York", cat:"城市", icon:"🗽", desc:"EarthCam 的时代广场 4K 机位，广告屏和人流 24 小时不停。马来西亚中午打开，正好是纽约的午夜霓虹。"},
-  {name:"纳米布沙漠水坑", en:"Namib Desert Waterhole", place:"纳米比亚 · 纳米布", lat:-24.65, lon:15.85, yt:"ydYDqZQpim8", tz:"Africa/Windhoek", cat:"野生动物", icon:"🦒", desc:"NamibiaCam 的招牌机位，红沙漠边一个太阳能水坑。剑羚、斑马、长颈鹿轮流来喝水，夜里有夜视，豹子偶尔出镜。最值得挂着等的一个。"},
-  {name:"埃托沙水坑", en:"Okaukuejo Waterhole, Etosha", place:"纳米比亚 · 埃托沙国家公园", lat:-19.178, lon:15.918, yt:"AeMUdOPFcXI", tz:"Africa/Windhoek", cat:"野生动物", icon:"🐘", desc:"埃托沙最有名的水坑，夜里有泛光灯。大象、犀牛、狮子都是夜班常客。"},
-  {name:"津巴布韦水坑", en:"The Hide Waterhole, Hwange", place:"津巴布韦 · 万盖国家公园", lat:-18.63, lon:26.98, yt:"nXI-kWu6BLo", tz:"Africa/Harare", cat:"野生动物", icon:"🦛", desc:"Africam 的机位，一只叫 Moto Moto 的河马常驻，下午大象群会整队过来。"},
-  {name:"中途岛信天翁", en:"Midway Atoll", place:"太平洋 · 中途岛", lat:28.2, lon:-177.38, yt:"L3iKvwoXZ38", tz:"Pacific/Midway", cat:"野生动物", icon:"🐦", desc:"地球上最偏远的直播之一，在太平洋正中间的环礁上，看信天翁繁殖地和整片太平洋。"},
-  {name:"国际空间站", en:"ISS Live", place:"近地轨道 · 400km 高", lat:0, lon:0, yt:"fO9e9jnhYK8", tz:"UTC", cat:"太空", icon:"🛰️", desc:"Sen 装在空间站上的 4K 相机看地球，90 分钟绕一圈，一天 16 次日出日落；飞到夜面时画面会黑一阵，是正常现象。这个不是固定地点，所以没有打在地球上，从列表打开。", iss:true},
-  {name:"NASA 电视台", en:"NASA TV", place:"美国 · 佛罗里达 · 肯尼迪航天中心一带", lat:28.57, lon:-80.65, type:"hls", src:"https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8", page:"https://www.nasa.gov/live/", tz:"America/New_York", cat:"太空", icon:"📡", desc:"NASA 官方直播频道的直连流（Akamai），不经过 YouTube：火箭发射、空间站活动、任务直播都走这条。平时是节目轮播，有发射任务时是现场。"},
-  {name:"基韦斯特海滩", en:"Key West Beach TV", place:"美国 · 佛罗里达 · 基韦斯特", lat:24.555, lon:-81.78, type:"hls", src:"https://5ed325193d4e1.streamlock.net:444/LiveTV/KTVHD/playlist.m3u8", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"美国本土最南端小岛的海滩电视频道直连流，轮播当地海滩、码头和日落画面，不经过 YouTube。"},
-  {name:"佛罗里达 30A 海岸", en:"30A Beach, Florida", place:"美国 · 佛罗里达 · 德斯坦一带", lat:30.35, lon:-86.16, type:"hls", src:"https://30a-tv.com/beachy.m3u8", tz:"America/Chicago", cat:"水乡", icon:"🌊", desc:"佛罗里达翡翠海岸（30A 公路沿线）的本地海滩频道直连流，白沙滩和墨绿海水是这一带的招牌。"},
-  {name:"黄石 · 猛犸温泉", en:"Mammoth Hot Springs, Yellowstone", place:"美国 · 黄石国家公园", lat:44.97, lon:-110.70, type:"img", src:"https://www.nps.gov/webcams-yell/mammoth_parade.jpg", page:"https://www.nps.gov/yell/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"♨️", desc:"国家公园管理局（NPS）官方快照机位：石灰华梯田温泉和大草坪。不是视频，是约每分钟自动换一张的实时照片。"},
-  {name:"黄石 · 沃什伯恩山", en:"Mount Washburn, Yellowstone", place:"美国 · 黄石国家公园", lat:44.80, lon:-110.45, type:"img", src:"https://www.nps.gov/webcams-yell/washburn_ne.jpg", page:"https://www.nps.gov/yell/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"⛰️", desc:"海拔 3122 米山顶的 NPS 官方快照，朝东北俯瞰黄石大峡谷方向，晴天视野极远。同样是自动刷新的实时照片。"},
-  {name:"优胜美地山谷", en:"Yosemite Valley", place:"美国 · 加州 · 优胜美地", lat:37.73, lon:-119.58, type:"img", src:"https://www.nps.gov/featurecontent/ard/webcams/images/yoselarge.jpg", page:"https://www.nps.gov/yose/learn/photosmultimedia/webcams.htm", refresh:120, tz:"America/Los_Angeles", cat:"自然", icon:"🪨", desc:"NPS 官方高清快照（大图约 3MB，加载稍慢），花岗岩大山谷和酋长岩。每两分钟自动换一张。"},
-  {name:"大峡谷南缘", en:"Grand Canyon South Rim", place:"美国 · 亚利桑那 · 大峡谷", lat:36.06, lon:-112.11, type:"img", src:"https://www.nps.gov/webcams-grca/camera.jpg", page:"https://www.nps.gov/grca/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Phoenix", cat:"自然", icon:"🏜️", desc:"NPS 官方快照机位，从南缘看大峡谷，光影随太阳变，下午到日落最壮观。约每分钟自动换一张。"},
-  {name:"雷尼尔雪山", en:"Mount Rainier", place:"美国 · 华盛顿州 · 雷尼尔国家公园", lat:46.85, lon:-121.76, type:"img", src:"https://www.nps.gov/webcams-mora/mountain.jpg", page:"https://www.nps.gov/mora/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Los_Angeles", cat:"自然", icon:"🏔️", desc:"NPS 官方快照，从 Paradise 一带看 4392 米的雷尼尔大雪山本体。华盛顿州天气多变，抓到晴天就是大片。"},
-  {name:"冰川公园 · 麦克唐纳湖", en:"Lake McDonald, Glacier NP", place:"美国 · 蒙大拿 · 冰川国家公园", lat:48.41, lon:-113.99, type:"img", src:"https://www.nps.gov/webcams-glac/LakeMcDonald1.jpg", page:"https://www.nps.gov/glac/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"🏞️", desc:"NPS 官方快照，冰川公园最大的湖，湖面倒映对岸雪山，清晨最平静。"},
-  {name:"锡安峡谷", en:"Zion Canyon", place:"美国 · 犹他 · 锡安国家公园", lat:37.30, lon:-113.03, type:"img", src:"https://www.nps.gov/webcams-zion/camera2.jpg", page:"https://www.nps.gov/zion/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"🪵", desc:"NPS 官方快照，红色砂岩大峡谷，阳光打在岩壁上的颜色从橙到紫一直在变。"},
-  {name:"新加坡 · 港湾快照", en:"Singapore Harbourfront Cam", place:"新加坡 · 港湾区", lat:1.26, lon:103.82, type:"sgapi", camId:"4799", api:"https://api.data.gov.sg/v1/transport/traffic-images", page:"https://onemotoring.lta.gov.sg/content/onemotoring/home/driving/traffic_information/traffic_cameras.html", refresh:60, tz:"Asia/Singapore", cat:"城市", icon:"🇸🇬", desc:"新加坡陆交局（LTA）官方开放数据的实时快照，港湾/圣淘沙门户一带。政府开放 API，每分钟自动取最新一张。"},
-  {name:"布鲁克斯瀑布棕熊", en:"Brooks Falls Brown Bears", place:"美国 · 阿拉斯加 · 卡特迈国家公园", lat:58.55, lon:-155.78, yt:"J7ZrIDvqlic", tz:"America/Anchorage", cat:"野生动物", icon:"🐻", desc:"explore.org 的招牌机位：棕熊站在瀑布顶上张嘴接跳上来的鲑鱼。鲑鱼季（6 月底到 10 月）最热闹，冬天熊冬眠就只剩瀑布。"},
-  {name:"费城 · 肯辛顿大道", en:"Kensington Avenue, Philadelphia", place:"美国 · 宾州 · 费城", lat:39.994, lon:-75.094, yt:"8rKTnxsNGxE", tz:"America/New_York", cat:"城市", icon:"🚶", desc:"费城肯辛顿大道的街景实况，行人、车流、店面，原汁原味的市井日常。"},
-  {name:"洛杉矶 · Skid Row", en:"Skid Row, Los Angeles", place:"美国 · 加州 · 洛杉矶市中心", lat:34.044, lon:-118.241, yt:"UENrzKU1bpc", tz:"America/Los_Angeles", cat:"城市", icon:"🏙️", desc:"洛杉矶市中心 Skid Row 街区的路口实况，帐篷、行人、车流，是美国大城市街头最真实的一面。"},
-  {name:"新奥尔良 · 波旁街", en:"Bourbon Street, New Orleans", place:"美国 · 路易斯安那 · 新奥尔良", lat:29.959, lon:-90.065, yt:"MD6hfzL8zQI", tz:"America/Chicago", cat:"城市", icon:"🎷", desc:"WWLTV 的波旁街机位，爵士之都最热闹的一条街，晚上人流和霓虹最有味道。"},
-  {name:"巴黎 · 埃菲尔铁塔", en:"Eiffel Tower, Paris", place:"法国 · 巴黎", lat:48.858, lon:2.294, yt:"3FeDZWenEdw", tz:"Europe/Paris", cat:"城市", icon:"🗼", desc:"DRM News 的巴黎实况，埃菲尔铁塔和巴黎天际线，整点亮灯和夜景最值得看。"},
-  {name:"东京 · 新宿歌舞伎町", en:"Kabukicho, Shinjuku", place:"日本 · 东京 · 新宿", lat:35.694, lon:139.704, yt:"DjdUEyjx8GM", tz:"Asia/Tokyo", cat:"城市", icon:"🌃", desc:"歌舞伎町一番街 24 小时实况，霓虹招牌和人流，号称不夜城的一条街。"},
-  {name:"Atlantic City Boardwalk", en:"Atlantic City Boardwalk", place:"美国 · Atlantic City", lat:39.364, lon:-74.423, yt:"vVyBOU9Huvo", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Santa Claus Village", en:"Santa Claus Village", place:"芬兰 · Rovaniemi", lat:66.503, lon:25.73, yt:"Cp4RRAEgpeU", tz:"Europe/Helsinki", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Bran Castle / Dracula's Castle", en:"Bran Castle / Dracula's Castle", place:"罗马尼亚 · Bran", lat:45.516, lon:25.372, yt:"8hgQsI1CfsY", tz:"Europe/Bucharest", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Rehoboth Boardwalk", en:"Rehoboth Boardwalk", place:"美国 · Rehoboth Beach", lat:38.716, lon:-75.084, yt:"lq15dNFXISw", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"San Clemente Beach", en:"San Clemente Beach", place:"美国 · San Clemente", lat:33.427, lon:-117.612, yt:"2c7NV66YzKA", tz:"America/Los_Angeles", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Cypress Mountain Ski Slopes", en:"Cypress Mountain Ski Slopes", place:"加拿大 · West Vancouver", lat:49.331, lon:-123.159, yt:"OSKgIDnBwwQ", tz:"America/Vancouver", cat:"自然", icon:"🏔️", desc:"自然风光实况"},
-  {name:"Masai Safari - Mara Bushtops Salt Lick", en:"Masai Safari - Mara Bushtops Salt Lick", place:"肯尼亚 · Narok", lat:-1.278, lon:35.477, yt:"xXZqU5vnEug", tz:"Africa/Nairobi", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
-  {name:"Piazza San Pietro", en:"Piazza San Pietro", place:"梵蒂冈 · Vatican City", lat:41.903, lon:12.453, yt:"EEM7a3mHMR4", tz:"Europe/Vatican", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Cijin Beach, Kaohsiung", en:"Cijin Beach, Kaohsiung", place:"中国台湾 · Kaohsiung", lat:22.62, lon:120.312, yt:"ka7FV0sCvxQ", tz:"Asia/Taipei", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Olympic Stadium Berlin", en:"Olympic Stadium Berlin", place:"德国 · Berlin", lat:52.517, lon:13.395, yt:"61b3Jty73Zo", tz:"Europe/Berlin", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Gaisberg Paragliding Launch, Salzburg", en:"Gaisberg Paragliding Launch, Salzburg", place:"奥地利 · Salzburg", lat:47.798, lon:13.046, yt:"uZV_CZCAf8g", tz:"Europe/Vienna", cat:"星空", icon:"✨", desc:"星空与极光实况"},
-  {name:"Dublin Bay", en:"Dublin Bay", place:"爱尔兰 · Dublin", lat:53.349, lon:-6.261, yt:"oxx7MqjhOpw", tz:"Europe/Dublin", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Sydney Harbour", en:"Sydney Harbour", place:"澳大利亚 · Sydney", lat:-33.87, lon:151.208, yt:"5uZa3-RMFos", tz:"Australia/Sydney", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Balneário Camboriú 海滨大道", en:"Avenida Atlântica, Balneário Camboriú", place:"巴西 · 圣卡塔琳娜 · 巴拉内阿里乌坎博里乌", lat:-26.991, lon:-48.634, yt:"5Xl6pSgiy3A", tz:"America/Sao_Paulo", cat:"水乡", icon:"🏖️", desc:"巴西“小迪拜”的海滨大道机位，一边是玻璃幕墙高楼群，一边是大西洋沙滩，日落时整条海岸线反光。"},
-  {name:"Tallinn Old Town", en:"Tallinn Old Town", place:"爱沙尼亚 · Tallinn", lat:59.437, lon:24.757, yt:"VhVgZi2lGv0", tz:"Europe/Tallinn", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Milan Skyline", en:"Milan Skyline", place:"意大利 · Milan", lat:45.464, lon:9.19, yt:"dsoM6TYIkOI", tz:"Europe/Rome", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Bergamo Skyline", en:"Bergamo Skyline", place:"意大利 · Bergamo", lat:45.757, lon:9.754, yt:"fXiekt4_Ulo", tz:"Europe/Rome", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Gwangandaegyo Bridge, Busan", en:"Gwangandaegyo Bridge, Busan", place:"韩国 · Busan", lat:35.18, lon:129.075, yt:"jqOh5kpJk9E", tz:"Asia/Seoul", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Nida Massage - Patong Street", en:"Nida Massage - Patong Street", place:"泰国 · Patong", lat:7.896, lon:98.296, yt:"bdHRgzYeYD4", tz:"Asia/Bangkok", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Praia dos Milionários Beach São Paulo, Brazil", en:"Praia dos Milionários Beach São Paulo, Brazil", place:"巴西 · Sao Vicente", lat:-23.966, lon:-46.386, yt:"qg8r2YSGYGI", tz:"America/Sao_Paulo", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Seoul Station Plaza", en:"Seoul Station Plaza", place:"韩国 · Seoul", lat:37.567, lon:126.978, yt:"2--j0SVYmRY", tz:"Asia/Seoul", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Sainamyen Road, Patong", en:"Sainamyen Road, Patong", place:"泰国 · Ban Patong", lat:7.918, lon:98.29, yt:"4y5jzMe1O5g", tz:"Asia/Bangkok", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Toronto CN Tower & Gardiner Expressway", en:"Toronto CN Tower & Gardiner Expressway", place:"加拿大 · Toronto", lat:43.653, lon:-79.384, yt:"-Js36EsiUgA", tz:"America/Toronto", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Playa Acapulco Beach, Viña del Mar, Chile", en:"Playa Acapulco Beach, Viña del Mar, Chile", place:"智利 · Vina Del Mar", lat:-33.024, lon:-71.552, yt:"aXTiz-Ng1mo", tz:"America/Santiago", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Oslo Winter Park (Skimore Oslo)", en:"Oslo Winter Park (Skimore Oslo)", place:"挪威 · Oslo", lat:59.913, lon:10.739, yt:"uUirqfUMK94", tz:"Europe/Oslo", cat:"自然", icon:"🏔️", desc:"自然风光实况"},
-  {name:"Khao Lak Resort", en:"Khao Lak Resort", place:"泰国 · Ban Khao Lak", lat:8.647, lon:98.248, yt:"pkJhFCpFALs", tz:"Asia/Bangkok", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Zoutelande Beach Camping", en:"Zoutelande Beach Camping", place:"荷兰 · Zoutelande", lat:51.502, lon:3.487, yt:"9yYWoKgoscM", tz:"Europe/Amsterdam", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"St. Barth Airport", en:"St. Barth Airport", place:"圣巴泰勒米 · Gustavia", lat:17.896, lon:-62.851, yt:"3PQNnVqrJEw", tz:"America/St_Barthelemy", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"New Chitose Airport", en:"New Chitose Airport", place:"日本 · Chitose", lat:42.821, lon:141.651, yt:"uvNVpMKG8rw", tz:"Asia/Tokyo", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Hauger Golf", en:"Hauger Golf", place:"挪威 · Leirsund", lat:60.0, lon:11.087, yt:"wIoKWDNPVlQ", tz:"Europe/Oslo", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Zandvoort Beach", en:"Zandvoort Beach", place:"荷兰 · Zandvoort", lat:52.372, lon:4.53, yt:"rs27UQIsaMU", tz:"Europe/Amsterdam", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Dotonbori Shopping Streets", en:"Dotonbori Shopping Streets", place:"日本 · Osaka", lat:34.694, lon:135.501, yt:"i2PpmC1IeKk", tz:"Asia/Tokyo", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Kuopio Market Square", en:"Kuopio Market Square", place:"芬兰 · Kuopio", lat:62.892, lon:27.678, yt:"T7RdJdFMz-U", tz:"Europe/Helsinki", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Duoliang Train Station", en:"Duoliang Train Station", place:"中国台湾 · Taimali", lat:22.615, lon:121.007, yt:"UCG1aXVO8H8", tz:"Asia/Taipei", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Plaza del Mercadal, Reus", en:"Plaza del Mercadal, Reus", place:"西班牙 · Reus", lat:41.156, lon:1.108, yt:"L9HyLjRVN8E", tz:"Europe/Madrid", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Broad Haven Beach", en:"Broad Haven Beach", place:"英国 · Broad Haven", lat:51.78, lon:-5.102, yt:"tkpmcVQroqs", tz:"Europe/London", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Hummingbird Feeder, Urubamba", en:"Hummingbird Feeder, Urubamba", place:"秘鲁 · Urubamba", lat:-13.229, lon:-72.265, yt:"nllueA0D7TY", tz:"America/Lima", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
-  {name:"Săcele, Brașov County", en:"Săcele, Brașov County", place:"罗马尼亚 · Sacele", lat:45.617, lon:25.691, yt:"EbckOT0HIQk", tz:"Europe/Bucharest", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"York & Townwall Street", en:"York & Townwall Street", place:"英国 · Dover", lat:51.125, lon:1.313, yt:"AQMaw6OAeHY", tz:"Europe/London", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Maho Bay, St. John, Virgin Islands", en:"Maho Bay, St. John, Virgin Islands", place:"美属维尔京群岛 · Cruz Bay", lat:18.331, lon:-64.794, yt:"5ioOZfE7ENs", tz:"America/St_Thomas", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Þorbjörn Live Volcano", en:"Þorbjörn Live Volcano", place:"冰岛 · Grindavik", lat:63.844, lon:-22.432, yt:"Bqudj0x0POA", tz:"Atlantic/Reykjavik", cat:"自然", icon:"🏔️", desc:"自然风光实况"},
-  {name:"Tamarind Reef Resort", en:"Tamarind Reef Resort", place:"美属维尔京群岛 · Christiansted", lat:17.744, lon:-64.708, yt:"qYCv8ACjD4k", tz:"America/St_Thomas", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Sint-Niklaas Grote Markt Redevelopment", en:"Sint-Niklaas Grote Markt Redevelopment", place:"比利时 · Sint Niklaas", lat:51.169, lon:4.102, yt:"VkjDBIqiKEU", tz:"Europe/Brussels", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Kontiolahti Biathlon Stadium", en:"Kontiolahti Biathlon Stadium", place:"芬兰 · Kontiolahti", lat:62.767, lon:29.85, yt:"O4hSj_1bUUM", tz:"Europe/Helsinki", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"White Stork Nest, Ádánd", en:"White Stork Nest, Ádánd", place:"匈牙利 · Adand", lat:46.857, lon:18.154, yt:"hKnuDloDCF8", tz:"Europe/Budapest", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
-  {name:"Candeias Beach Cam", en:"Candeias Beach Cam", place:"巴西 · Jaboatao", lat:-8.175, lon:-34.947, yt:"dxdYXc9sRHY", tz:"America/Recife", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Soliman Street, Agdao, Davao City", en:"Soliman Street, Agdao, Davao City", place:"菲律宾 · Davao", lat:7.065, lon:125.608, yt:"t0E0Mw0mGW0", tz:"Asia/Manila", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Perm City District", en:"Perm City District", place:"俄罗斯 · Perm", lat:58.011, lon:56.232, yt:"QjYQJSfaA7E", tz:"Asia/Yekaterinburg", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
-  {name:"Tamariu Beach", en:"Tamariu Beach", place:"西班牙 · Tamariu", lat:41.92, lon:3.207, yt:"ld87T3g_nyg", tz:"Europe/Madrid", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Kukup Beach", en:"Kukup Beach", place:"印尼 · Kemadang", lat:-8.095, lon:110.572, yt:"xnS4WA-0Mv8", tz:"Asia/Jakarta", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
-  {name:"Black Stork Nest, Pärnu", en:"Black Stork Nest, Pärnu", place:"爱沙尼亚 · Paernu", lat:58.387, lon:24.503, yt:"4-v_C_lCdU0", tz:"Europe/Tallinn", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
-  {name:"Sanok Market Square", en:"Sanok Market Square", place:"波兰 · Sanok", lat:49.561, lon:22.207, yt:"ReqMDd6ZC-U", tz:"Europe/Warsaw", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"涩谷十字路口", en:"Shibuya Crossing", pEn:"Japan · Tokyo", dEn:"The world's busiest crossing — a few thousand people per green light at peak. Neon is at its best after dark.", place:"日本 · 东京", lat:35.6595, lon:139.7005, yt:"dfVK7ld38Ys", tz:"Asia/Tokyo", cat:"城市", icon:"🚥", desc:"全世界最有名的十字路口，高峰时一次绿灯几千人同时过马路。晚上霓虹最热闹。"},
+  {name:"东京湾 · 彩虹大桥", en:"Tokyo Bay", pEn:"Japan · Tokyo", dEn:"Fixed cam on the Rainbow Bridge and Tokyo Bay. The bridge lights up at night; good background TV.", place:"日本 · 东京", lat:35.636, lon:139.77, yt:"_k-5U7IeK8g", tz:"Asia/Tokyo", cat:"城市", icon:"🌉", desc:"Tokyo Views 频道的固定机位，看彩虹大桥和东京湾，夜里桥会亮灯，适合当背景放着。"},
+{name:"威尼斯大运河", en:"Grand Canal, Venice", pEn:"Italy · Venice", dEn:"4K on the Grand Canal from a Povoledo terrace — gondolas and vaporetti passing all day.", place:"意大利 · 威尼斯", lat:45.437, lon:12.335, yt:"r8N6IsoIkTk", tz:"Europe/Rome", cat:"水乡", icon:"🛶", desc:"I Love You Venice 的 4K 机位，从 Povoledo 餐厅露台看大运河，贡多拉和水上巴士来来往往。"},
+  {name:"伦敦 · 修道院路斑马线", en:"Abbey Road Crossing", pEn:"United Kingdom · London", dEn:"The Abbey Road zebra crossing from the Beatles sleeve. Tourists strike the same pose all day.", place:"英国 · 伦敦", lat:51.532, lon:-0.177, yt:"zMCea32gpmg", tz:"Europe/London", cat:"城市", icon:"🎸", desc:"披头士《Abbey Road》封面那条斑马线，EarthCam 机位。全天都有游客摆同款姿势拍照。"},
+  {name:"夏威夷 · 冒纳凯阿星空", en:"Mauna Kea StarCam", pEn:"United States · Hawaii", dEn:"4K sky camera at the CFHT observatory, 4,200 m up. Cloud sea and domes by day, Milky Way and meteors at night.", place:"美国 · 夏威夷", lat:19.826, lon:-155.471, yt:"Q3UhCgsWDw8", tz:"Pacific/Honolulu", cat:"星空", icon:"🔭", desc:"CFHT 天文台的 4K 星空相机，海拔 4200 米。白天看云海和望远镜圆顶，夜里银河、流星全靠它，马来西亚晚上正好是它那边夜里。"},
+  {name:"基拉韦厄火山", en:"Kilauea Volcano", pEn:"United States · Hawaii", dEn:"USGS crater cam. Lava during eruptions, steam and crater rim the rest of the time.", place:"美国 · 夏威夷", lat:19.406, lon:-155.283, yt:"gXKuUyKt8mc", tz:"Pacific/Honolulu", cat:"自然", icon:"🌋", desc:"USGS 的火山口机位。喷发期能看到熔岩，平时是火山口和蒸汽。"},
+  {name:"纽约 · 时代广场", en:"Times Square", pEn:"United States · New York", dEn:"EarthCam's 4K Times Square view — billboards and crowds, 24 hours a day.", place:"美国 · 纽约", lat:40.758, lon:-73.9855, yt:"JQ_jwk_7OVE", tz:"America/New_York", cat:"城市", icon:"🗽", desc:"EarthCam 的时代广场 4K 机位，广告屏和人流 24 小时不停。马来西亚中午打开，正好是纽约的午夜霓虹。"},
+  {name:"纳米布沙漠水坑", en:"Namib Desert Waterhole", pEn:"Namibia · Namib", dEn:"NamibiaCam's signature waterhole on the edge of the red desert. Oryx, zebra and giraffe take turns; night vision on, leopards occasionally.", place:"纳米比亚 · 纳米布", lat:-24.65, lon:15.85, yt:"ydYDqZQpim8", tz:"Africa/Windhoek", cat:"野生动物", icon:"🦒", desc:"NamibiaCam 的招牌机位，红沙漠边一个太阳能水坑。剑羚、斑马、长颈鹿轮流来喝水，夜里有夜视，豹子偶尔出镜。最值得挂着等的一个。"},
+  {name:"埃托沙水坑", en:"Okaukuejo Waterhole, Etosha", pEn:"Namibia · Etosha National Park", dEn:"Etosha's most famous waterhole, floodlit after dark. Elephants, rhino and lions are the night shift.", place:"纳米比亚 · 埃托沙国家公园", lat:-19.178, lon:15.918, yt:"AeMUdOPFcXI", tz:"Africa/Windhoek", cat:"野生动物", icon:"🐘", desc:"埃托沙最有名的水坑，夜里有泛光灯。大象、犀牛、狮子都是夜班常客。"},
+  {name:"津巴布韦水坑", en:"The Hide Waterhole, Hwange", pEn:"Zimbabwe · Hwange National Park", dEn:"Africam's pan with a resident hippo called Moto Moto; elephant herds file in through the afternoon.", place:"津巴布韦 · 万盖国家公园", lat:-18.63, lon:26.98, yt:"nXI-kWu6BLo", tz:"Africa/Harare", cat:"野生动物", icon:"🦛", desc:"Africam 的机位，一只叫 Moto Moto 的河马常驻，下午大象群会整队过来。"},
+  {name:"中途岛信天翁", en:"Midway Atoll", pEn:"Pacific · Midway Atoll", dEn:"One of the most remote streams on Earth — an albatross colony on an atoll in the middle of the Pacific.", place:"太平洋 · 中途岛", lat:28.2, lon:-177.38, yt:"L3iKvwoXZ38", tz:"Pacific/Midway", cat:"野生动物", icon:"🐦", desc:"地球上最偏远的直播之一，在太平洋正中间的环礁上，看信天翁繁殖地和整片太平洋。"},
+  {name:"国际空间站", en:"ISS Live", pEn:"Low Earth orbit · 400 km up", dEn:"Sen's 4K camera on the ISS looking down. One orbit every 90 minutes, 16 sunrises a day; it goes dark on the night side.", place:"近地轨道 · 400km 高", lat:0, lon:0, yt:"fO9e9jnhYK8", tz:"UTC", cat:"太空", icon:"🛰️", desc:"Sen 装在空间站上的 4K 相机看地球，90 分钟绕一圈，一天 16 次日出日落；飞到夜面时画面会黑一阵，是正常现象。这个不是固定地点，所以没有打在地球上，从列表打开。", iss:true},
+  {name:"NASA 电视台", en:"NASA TV", pEn:"United States · Florida · Kennedy Space Center area", dEn:"NASA's own HLS feed over Akamai, no YouTube involved: launches, station activity and mission coverage.", place:"美国 · 佛罗里达 · 肯尼迪航天中心一带", lat:28.57, lon:-80.65, type:"hls", src:"https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8", page:"https://www.nasa.gov/live/", tz:"America/New_York", cat:"太空", icon:"📡", desc:"NASA 官方直播频道的直连流（Akamai），不经过 YouTube：火箭发射、空间站活动、任务直播都走这条。平时是节目轮播，有发射任务时是现场。"},
+  {name:"基韦斯特海滩", en:"Key West Beach TV", pEn:"United States · Florida · Key West", dEn:"Local beach TV feed from the southernmost island — beach, pier and sunset on rotation.", place:"美国 · 佛罗里达 · 基韦斯特", lat:24.555, lon:-81.78, type:"hls", src:"https://5ed325193d4e1.streamlock.net:444/LiveTV/KTVHD/playlist.m3u8", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"美国本土最南端小岛的海滩电视频道直连流，轮播当地海滩、码头和日落画面，不经过 YouTube。"},
+  {name:"佛罗里达 30A 海岸", en:"30A Beach, Florida", pEn:"United States · Florida · Destin area", dEn:"Local feed from the Emerald Coast along Scenic 30A. White sand, dark green water.", place:"美国 · 佛罗里达 · 德斯坦一带", lat:30.35, lon:-86.16, type:"hls", src:"https://30a-tv.com/beachy.m3u8", tz:"America/Chicago", cat:"水乡", icon:"🌊", desc:"佛罗里达翡翠海岸（30A 公路沿线）的本地海滩频道直连流，白沙滩和墨绿海水是这一带的招牌。"},
+  {name:"黄石 · 猛犸温泉", en:"Mammoth Hot Springs, Yellowstone", pEn:"United States · Yellowstone National Park", dEn:"NPS snapshot cam: travertine terraces and lawn. A still photo refreshed about once a minute.", place:"美国 · 黄石国家公园", lat:44.97, lon:-110.70, type:"img", src:"https://www.nps.gov/webcams-yell/mammoth_parade.jpg", page:"https://www.nps.gov/yell/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"♨️", desc:"国家公园管理局（NPS）官方快照机位：石灰华梯田温泉和大草坪。不是视频，是约每分钟自动换一张的实时照片。"},
+  {name:"黄石 · 沃什伯恩山", en:"Mount Washburn, Yellowstone", pEn:"United States · Yellowstone National Park", dEn:"NPS snapshot from 3,122 m on Mount Washburn, looking northeast toward the canyon.", place:"美国 · 黄石国家公园", lat:44.80, lon:-110.45, type:"img", src:"https://www.nps.gov/webcams-yell/washburn_ne.jpg", page:"https://www.nps.gov/yell/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"⛰️", desc:"海拔 3122 米山顶的 NPS 官方快照，朝东北俯瞰黄石大峡谷方向，晴天视野极远。同样是自动刷新的实时照片。"},
+  {name:"优胜美地山谷", en:"Yosemite Valley", pEn:"United States · California · Yosemite", dEn:"NPS hi-res snapshot (about 3 MB, slow to load) of the valley and El Capitan, refreshed every two minutes.", place:"美国 · 加州 · 优胜美地", lat:37.73, lon:-119.58, type:"img", src:"https://www.nps.gov/featurecontent/ard/webcams/images/yoselarge.jpg", page:"https://www.nps.gov/yose/learn/photosmultimedia/webcams.htm", refresh:120, tz:"America/Los_Angeles", cat:"自然", icon:"🪨", desc:"NPS 官方高清快照（大图约 3MB，加载稍慢），花岗岩大山谷和酋长岩。每两分钟自动换一张。"},
+  {name:"大峡谷南缘", en:"Grand Canyon South Rim", pEn:"United States · Arizona · Grand Canyon", dEn:"NPS snapshot from the South Rim; the colours shift with the sun, best from afternoon to sunset.", place:"美国 · 亚利桑那 · 大峡谷", lat:36.06, lon:-112.11, type:"img", src:"https://www.nps.gov/webcams-grca/camera.jpg", page:"https://www.nps.gov/grca/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Phoenix", cat:"自然", icon:"🏜️", desc:"NPS 官方快照机位，从南缘看大峡谷，光影随太阳变，下午到日落最壮观。约每分钟自动换一张。"},
+  {name:"雷尼尔雪山", en:"Mount Rainier", pEn:"United States · Washington · Mount Rainier NP", dEn:"NPS snapshot of the 4,392 m volcano from the Paradise area. Washington weather changes fast — a clear frame is a keeper.", place:"美国 · 华盛顿州 · 雷尼尔国家公园", lat:46.85, lon:-121.76, type:"img", src:"https://www.nps.gov/webcams-mora/mountain.jpg", page:"https://www.nps.gov/mora/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Los_Angeles", cat:"自然", icon:"🏔️", desc:"NPS 官方快照，从 Paradise 一带看 4392 米的雷尼尔大雪山本体。华盛顿州天气多变，抓到晴天就是大片。"},
+  {name:"冰川公园 · 麦克唐纳湖", en:"Lake McDonald, Glacier NP", pEn:"United States · Montana · Glacier National Park", dEn:"NPS snapshot of the park's largest lake, mirroring the peaks across it. Calmest at dawn.", place:"美国 · 蒙大拿 · 冰川国家公园", lat:48.41, lon:-113.99, type:"img", src:"https://www.nps.gov/webcams-glac/LakeMcDonald1.jpg", page:"https://www.nps.gov/glac/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"🏞️", desc:"NPS 官方快照，冰川公园最大的湖，湖面倒映对岸雪山，清晨最平静。"},
+  {name:"锡安峡谷", en:"Zion Canyon", pEn:"United States · Utah · Zion National Park", dEn:"NPS snapshot of the red sandstone canyon; the walls run from orange to purple as the sun moves.", place:"美国 · 犹他 · 锡安国家公园", lat:37.30, lon:-113.03, type:"img", src:"https://www.nps.gov/webcams-zion/camera2.jpg", page:"https://www.nps.gov/zion/learn/photosmultimedia/webcams.htm", refresh:60, tz:"America/Denver", cat:"自然", icon:"🪵", desc:"NPS 官方快照，红色砂岩大峡谷，阳光打在岩壁上的颜色从橙到紫一直在变。"},
+  {name:"新加坡 · 港湾快照", en:"Singapore Harbourfront Cam", pEn:"Singapore · HarbourFront", dEn:"Live snapshot from Singapore's LTA open data, covering the HarbourFront / Sentosa gateway. Pulled fresh every minute.", place:"新加坡 · 港湾区", lat:1.26, lon:103.82, type:"sgapi", camId:"4799", api:"https://api.data.gov.sg/v1/transport/traffic-images", page:"https://onemotoring.lta.gov.sg/content/onemotoring/home/driving/traffic_information/traffic_cameras.html", refresh:60, tz:"Asia/Singapore", cat:"城市", icon:"🇸🇬", desc:"新加坡陆交局（LTA）官方开放数据的实时快照，港湾/圣淘沙门户一带。政府开放 API，每分钟自动取最新一张。"},
+  {name:"布鲁克斯瀑布棕熊", en:"Brooks Falls Brown Bears", pEn:"United States · Alaska · Katmai National Park", dEn:"explore.org's famous falls: brown bears standing at the lip catching salmon mid-air. Peak season late June to October.", place:"美国 · 阿拉斯加 · 卡特迈国家公园", lat:58.55, lon:-155.78, yt:"J7ZrIDvqlic", tz:"America/Anchorage", cat:"野生动物", icon:"🐻", desc:"explore.org 的招牌机位：棕熊站在瀑布顶上张嘴接跳上来的鲑鱼。鲑鱼季（6 月底到 10 月）最热闹，冬天熊冬眠就只剩瀑布。"},
+  {name:"费城 · 肯辛顿大道", en:"Kensington Avenue, Philadelphia", pEn:"United States · Pennsylvania · Philadelphia", dEn:"Street level on Kensington Avenue — pedestrians, traffic, storefronts. Everyday city life.", place:"美国 · 宾州 · 费城", lat:39.994, lon:-75.094, yt:"8rKTnxsNGxE", tz:"America/New_York", cat:"城市", icon:"🚶", desc:"费城肯辛顿大道的街景实况，行人、车流、店面，原汁原味的市井日常。"},
+  {name:"洛杉矶 · Skid Row", en:"Skid Row, Los Angeles", pEn:"United States · California · Downtown LA", dEn:"An intersection in Skid Row: tents, pedestrians, traffic — the rawest side of a big American city.", place:"美国 · 加州 · 洛杉矶市中心", lat:34.044, lon:-118.241, yt:"UENrzKU1bpc", tz:"America/Los_Angeles", cat:"城市", icon:"🏙️", desc:"洛杉矶市中心 Skid Row 街区的路口实况，帐篷、行人、车流，是美国大城市街头最真实的一面。"},
+  {name:"新奥尔良 · 波旁街", en:"Bourbon Street, New Orleans", pEn:"United States · Louisiana · New Orleans", dEn:"WWLTV's Bourbon Street cam. Busiest and best after dark.", place:"美国 · 路易斯安那 · 新奥尔良", lat:29.959, lon:-90.065, yt:"MD6hfzL8zQI", tz:"America/Chicago", cat:"城市", icon:"🎷", desc:"WWLTV 的波旁街机位，爵士之都最热闹的一条街，晚上人流和霓虹最有味道。"},
+  {name:"巴黎 · 埃菲尔铁塔", en:"Eiffel Tower, Paris", pEn:"France · Paris", dEn:"DRM News live from Paris — Eiffel Tower and skyline. Worth catching on the hour when it sparkles.", place:"法国 · 巴黎", lat:48.858, lon:2.294, yt:"3FeDZWenEdw", tz:"Europe/Paris", cat:"城市", icon:"🗼", desc:"DRM News 的巴黎实况，埃菲尔铁塔和巴黎天际线，整点亮灯和夜景最值得看。"},
+  {name:"东京 · 新宿歌舞伎町", en:"Kabukicho, Shinjuku", pEn:"Japan · Tokyo · Shinjuku", dEn:"24/7 on Kabukicho's main street: neon signs and crowds, the city that never sleeps.", place:"日本 · 东京 · 新宿", lat:35.694, lon:139.704, yt:"DjdUEyjx8GM", tz:"Asia/Tokyo", cat:"城市", icon:"🌃", desc:"歌舞伎町一番街 24 小时实况，霓虹招牌和人流，号称不夜城的一条街。"},
+  {name:"Atlantic City Boardwalk", en:"Atlantic City Boardwalk", pEn:"United States · Atlantic City", dEn:"Boardwalk and beach, live.", place:"美国 · Atlantic City", lat:39.364, lon:-74.423, yt:"vVyBOU9Huvo", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Santa Claus Village", en:"Santa Claus Village", pEn:"Finland · Rovaniemi", dEn:"Street view from the village on the Arctic Circle.", place:"芬兰 · Rovaniemi", lat:66.503, lon:25.73, yt:"Cp4RRAEgpeU", tz:"Europe/Helsinki", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Bran Castle / Dracula's Castle", en:"Bran Castle / Dracula's Castle", pEn:"Romania · Bran", dEn:"Street view below the castle.", place:"罗马尼亚 · Bran", lat:45.516, lon:25.372, yt:"8hgQsI1CfsY", tz:"Europe/Bucharest", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Rehoboth Boardwalk", en:"Rehoboth Boardwalk", pEn:"United States · Rehoboth Beach", dEn:"Boardwalk and shoreline, live.", place:"美国 · Rehoboth Beach", lat:38.716, lon:-75.084, yt:"lq15dNFXISw", tz:"America/New_York", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"San Clemente Beach", en:"San Clemente Beach", pEn:"United States · San Clemente", dEn:"Beach and pier, live.", place:"美国 · San Clemente", lat:33.427, lon:-117.612, yt:"2c7NV66YzKA", tz:"America/Los_Angeles", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Cypress Mountain Ski Slopes", en:"Cypress Mountain Ski Slopes", pEn:"Canada · West Vancouver", dEn:"Ski runs and lift line above Vancouver.", place:"加拿大 · West Vancouver", lat:49.331, lon:-123.159, yt:"OSKgIDnBwwQ", tz:"America/Vancouver", cat:"自然", icon:"🏔️", desc:"自然风光实况"},
+  {name:"Masai Safari - Mara Bushtops Salt Lick", en:"Masai Safari - Mara Bushtops Salt Lick", pEn:"Kenya · Narok", dEn:"Salt lick in the Maasai Mara, wildlife live.", place:"肯尼亚 · Narok", lat:-1.278, lon:35.477, yt:"xXZqU5vnEug", tz:"Africa/Nairobi", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
+  {name:"Piazza San Pietro", en:"Piazza San Pietro", pEn:"Vatican City · Vatican City", dEn:"St Peter's Square, live.", place:"梵蒂冈 · Vatican City", lat:41.903, lon:12.453, yt:"EEM7a3mHMR4", tz:"Europe/Vatican", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Cijin Beach, Kaohsiung", en:"Cijin Beach, Kaohsiung", pEn:"Taiwan, China · Kaohsiung", dEn:"Beach and strait, live.", place:"中国台湾 · Kaohsiung", lat:22.62, lon:120.312, yt:"ka7FV0sCvxQ", tz:"Asia/Taipei", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Olympic Stadium Berlin", en:"Olympic Stadium Berlin", pEn:"Germany · Berlin", dEn:"Stadium plaza, live.", place:"德国 · Berlin", lat:52.517, lon:13.395, yt:"61b3Jty73Zo", tz:"Europe/Berlin", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Gaisberg Paragliding Launch, Salzburg", en:"Gaisberg Paragliding Launch, Salzburg", pEn:"Austria · Salzburg", dEn:"Paraglider launch above Salzburg — sky, city and valley.", place:"奥地利 · Salzburg", lat:47.798, lon:13.046, yt:"uZV_CZCAf8g", tz:"Europe/Vienna", cat:"星空", icon:"✨", desc:"星空与极光实况"},
+  {name:"Dublin Bay", en:"Dublin Bay", pEn:"Ireland · Dublin", dEn:"Bay and waterfront, live.", place:"爱尔兰 · Dublin", lat:53.349, lon:-6.261, yt:"oxx7MqjhOpw", tz:"Europe/Dublin", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Sydney Harbour", en:"Sydney Harbour", pEn:"Australia · Sydney", dEn:"Harbour and skyline, live.", place:"澳大利亚 · Sydney", lat:-33.87, lon:151.208, yt:"5uZa3-RMFos", tz:"Australia/Sydney", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Balneário Camboriú 海滨大道", en:"Avenida Atlântica, Balneário Camboriú", pEn:"Brazil · Santa Catarina · Balneário Camboriú", dEn:"Brazil's 'little Dubai': glass towers on one side, Atlantic beach on the other; the whole shoreline glows at sunset.", place:"巴西 · 圣卡塔琳娜 · 巴拉内阿里乌坎博里乌", lat:-26.991, lon:-48.634, yt:"5Xl6pSgiy3A", tz:"America/Sao_Paulo", cat:"水乡", icon:"🏖️", desc:"巴西“小迪拜”的海滨大道机位，一边是玻璃幕墙高楼群，一边是大西洋沙滩，日落时整条海岸线反光。"},
+  {name:"Tallinn Old Town", en:"Tallinn Old Town", pEn:"Estonia · Tallinn", dEn:"Medieval old town square, live.", place:"爱沙尼亚 · Tallinn", lat:59.437, lon:24.757, yt:"VhVgZi2lGv0", tz:"Europe/Tallinn", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Milan Skyline", en:"Milan Skyline", pEn:"Italy · Milan", dEn:"City skyline, live.", place:"意大利 · Milan", lat:45.464, lon:9.19, yt:"dsoM6TYIkOI", tz:"Europe/Rome", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Bergamo Skyline", en:"Bergamo Skyline", pEn:"Italy · Bergamo", dEn:"Upper town skyline, live.", place:"意大利 · Bergamo", lat:45.757, lon:9.754, yt:"fXiekt4_Ulo", tz:"Europe/Rome", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Gwangandaegyo Bridge, Busan", en:"Gwangandaegyo Bridge, Busan", pEn:"South Korea · Busan", dEn:"Cable-stayed bridge over the sea, live.", place:"韩国 · Busan", lat:35.18, lon:129.075, yt:"jqOh5kpJk9E", tz:"Asia/Seoul", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Nida Massage - Patong Street", en:"Nida Massage - Patong Street", pEn:"Thailand · Patong", dEn:"Nightlife street view, live.", place:"泰国 · Patong", lat:7.896, lon:98.296, yt:"bdHRgzYeYD4", tz:"Asia/Bangkok", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Praia dos Milionários Beach São Paulo, Brazil", en:"Praia dos Milionários Beach São Paulo, Brazil", pEn:"Brazil · São Vicente", dEn:"Beach and surf, live.", place:"巴西 · Sao Vicente", lat:-23.966, lon:-46.386, yt:"qg8r2YSGYGI", tz:"America/Sao_Paulo", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Seoul Station Plaza", en:"Seoul Station Plaza", pEn:"South Korea · Seoul", dEn:"Station plaza and foot traffic, live.", place:"韩国 · Seoul", lat:37.567, lon:126.978, yt:"2--j0SVYmRY", tz:"Asia/Seoul", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Sainamyen Road, Patong", en:"Sainamyen Road, Patong", pEn:"Thailand · Ban Patong", dEn:"Street view, live.", place:"泰国 · Ban Patong", lat:7.918, lon:98.29, yt:"4y5jzMe1O5g", tz:"Asia/Bangkok", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Toronto CN Tower & Gardiner Expressway", en:"Toronto CN Tower & Gardiner Expressway", pEn:"Canada · Toronto", dEn:"Tower and expressway traffic, live.", place:"加拿大 · Toronto", lat:43.653, lon:-79.384, yt:"-Js36EsiUgA", tz:"America/Toronto", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Playa Acapulco Beach, Viña del Mar, Chile", en:"Playa Acapulco Beach, Viña del Mar, Chile", pEn:"Chile · Viña del Mar", dEn:"Beach and Pacific surf, live.", place:"智利 · Vina Del Mar", lat:-33.024, lon:-71.552, yt:"aXTiz-Ng1mo", tz:"America/Santiago", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Oslo Winter Park (Skimore Oslo)", en:"Oslo Winter Park (Skimore Oslo)", pEn:"Norway · Oslo", dEn:"Ski slopes above the city.", place:"挪威 · Oslo", lat:59.913, lon:10.739, yt:"uUirqfUMK94", tz:"Europe/Oslo", cat:"自然", icon:"🏔️", desc:"自然风光实况"},
+  {name:"Khao Lak Resort", en:"Khao Lak Resort", pEn:"Thailand · Ban Khao Lak", dEn:"Resort pool and beach, live.", place:"泰国 · Ban Khao Lak", lat:8.647, lon:98.248, yt:"pkJhFCpFALs", tz:"Asia/Bangkok", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Zoutelande Beach Camping", en:"Zoutelande Beach Camping", pEn:"Netherlands · Zoutelande", dEn:"Beach and dunes, live.", place:"荷兰 · Zoutelande", lat:51.502, lon:3.487, yt:"9yYWoKgoscM", tz:"Europe/Amsterdam", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"St. Barth Airport", en:"St. Barth Airport", pEn:"St Barthélemy · Gustavia", dEn:"Tiny runway and apron, live.", place:"圣巴泰勒米 · Gustavia", lat:17.896, lon:-62.851, yt:"3PQNnVqrJEw", tz:"America/St_Barthelemy", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"New Chitose Airport", en:"New Chitose Airport", pEn:"Japan · Chitose", dEn:"Apron and terminal, live.", place:"日本 · Chitose", lat:42.821, lon:141.651, yt:"uvNVpMKG8rw", tz:"Asia/Tokyo", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Hauger Golf", en:"Hauger Golf", pEn:"Norway · Leirsund", dEn:"Golf course, live.", place:"挪威 · Leirsund", lat:60.0, lon:11.087, yt:"wIoKWDNPVlQ", tz:"Europe/Oslo", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Zandvoort Beach", en:"Zandvoort Beach", pEn:"Netherlands · Zandvoort", dEn:"North Sea beach, live.", place:"荷兰 · Zandvoort", lat:52.372, lon:4.53, yt:"rs27UQIsaMU", tz:"Europe/Amsterdam", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Dotonbori Shopping Streets", en:"Dotonbori Shopping Streets", pEn:"Japan · Osaka", dEn:"Neon canal street, live.", place:"日本 · Osaka", lat:34.694, lon:135.501, yt:"i2PpmC1IeKk", tz:"Asia/Tokyo", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Kuopio Market Square", en:"Kuopio Market Square", pEn:"Finland · Kuopio", dEn:"Market square, live.", place:"芬兰 · Kuopio", lat:62.892, lon:27.678, yt:"T7RdJdFMz-U", tz:"Europe/Helsinki", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Duoliang Train Station", en:"Duoliang Train Station", pEn:"Taiwan, China · Taimali", dEn:"The little station above the Pacific, live.", place:"中国台湾 · Taimali", lat:22.615, lon:121.007, yt:"UCG1aXVO8H8", tz:"Asia/Taipei", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Plaza del Mercadal, Reus", en:"Plaza del Mercadal, Reus", pEn:"Spain · Reus", dEn:"Central square, live.", place:"西班牙 · Reus", lat:41.156, lon:1.108, yt:"L9HyLjRVN8E", tz:"Europe/Madrid", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Broad Haven Beach", en:"Broad Haven Beach", pEn:"United Kingdom · Broad Haven", dEn:"Welsh beach and tide, live.", place:"英国 · Broad Haven", lat:51.78, lon:-5.102, yt:"tkpmcVQroqs", tz:"Europe/London", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Hummingbird Feeder, Urubamba", en:"Hummingbird Feeder, Urubamba", pEn:"Peru · Urubamba", dEn:"Hummingbird feeder in the Sacred Valley.", place:"秘鲁 · Urubamba", lat:-13.229, lon:-72.265, yt:"nllueA0D7TY", tz:"America/Lima", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
+  {name:"Săcele, Brașov County", en:"Săcele, Brașov County", pEn:"Romania · Săcele", dEn:"Street view, live.", place:"罗马尼亚 · Sacele", lat:45.617, lon:25.691, yt:"EbckOT0HIQk", tz:"Europe/Bucharest", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"York & Townwall Street", en:"York & Townwall Street", pEn:"United Kingdom · Dover", dEn:"Street by the port, live.", place:"英国 · Dover", lat:51.125, lon:1.313, yt:"AQMaw6OAeHY", tz:"Europe/London", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Maho Bay, St. John, Virgin Islands", en:"Maho Bay, St. John, Virgin Islands", pEn:"US Virgin Islands · Cruz Bay", dEn:"Bay and boats, live.", place:"美属维尔京群岛 · Cruz Bay", lat:18.331, lon:-64.794, yt:"5ioOZfE7ENs", tz:"America/St_Thomas", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Þorbjörn Live Volcano", en:"Þorbjörn Live Volcano", pEn:"Iceland · Grindavík", dEn:"Volcanic slopes on the Reykjanes peninsula, live.", place:"冰岛 · Grindavik", lat:63.844, lon:-22.432, yt:"Bqudj0x0POA", tz:"Atlantic/Reykjavik", cat:"自然", icon:"🏔️", desc:"自然风光实况"},
+  {name:"Tamarind Reef Resort", en:"Tamarind Reef Resort", pEn:"US Virgin Islands · Christiansted", dEn:"Reef and marina, live.", place:"美属维尔京群岛 · Christiansted", lat:17.744, lon:-64.708, yt:"qYCv8ACjD4k", tz:"America/St_Thomas", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Sint-Niklaas Grote Markt Redevelopment", en:"Sint-Niklaas Grote Markt Redevelopment", pEn:"Belgium · Sint-Niklaas", dEn:"Market square under redevelopment, live.", place:"比利时 · Sint Niklaas", lat:51.169, lon:4.102, yt:"VkjDBIqiKEU", tz:"Europe/Brussels", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Kontiolahti Biathlon Stadium", en:"Kontiolahti Biathlon Stadium", pEn:"Finland · Kontiolahti", dEn:"Biathlon range, live.", place:"芬兰 · Kontiolahti", lat:62.767, lon:29.85, yt:"O4hSj_1bUUM", tz:"Europe/Helsinki", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"White Stork Nest, Ádánd", en:"White Stork Nest, Ádánd", pEn:"Hungary · Ádánd", dEn:"White stork nest, live.", place:"匈牙利 · Adand", lat:46.857, lon:18.154, yt:"hKnuDloDCF8", tz:"Europe/Budapest", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
+  {name:"Candeias Beach Cam", en:"Candeias Beach Cam", pEn:"Brazil · Jaboatão", dEn:"Beach and reef pools, live.", place:"巴西 · Jaboatao", lat:-8.175, lon:-34.947, yt:"dxdYXc9sRHY", tz:"America/Recife", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Soliman Street, Agdao, Davao City", en:"Soliman Street, Agdao, Davao City", pEn:"Philippines · Davao", dEn:"Street view, live.", place:"菲律宾 · Davao", lat:7.065, lon:125.608, yt:"t0E0Mw0mGW0", tz:"Asia/Manila", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Perm City District", en:"Perm City District", pEn:"Russia · Perm", dEn:"City street, live.", place:"俄罗斯 · Perm", lat:58.011, lon:56.232, yt:"QjYQJSfaA7E", tz:"Asia/Yekaterinburg", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
+  {name:"Tamariu Beach", en:"Tamariu Beach", pEn:"Spain · Tamariu", dEn:"Cove beach, live.", place:"西班牙 · Tamariu", lat:41.92, lon:3.207, yt:"ld87T3g_nyg", tz:"Europe/Madrid", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Kukup Beach", en:"Kukup Beach", pEn:"Indonesia · Kemadang", dEn:"Beach and cliffs, live.", place:"印尼 · Kemadang", lat:-8.095, lon:110.572, yt:"xnS4WA-0Mv8", tz:"Asia/Jakarta", cat:"水乡", icon:"🏖️", desc:"海滩与海岸实况"},
+  {name:"Black Stork Nest, Pärnu", en:"Black Stork Nest, Pärnu", pEn:"Estonia · Pärnu", dEn:"Black stork nest, live.", place:"爱沙尼亚 · Paernu", lat:58.387, lon:24.503, yt:"4-v_C_lCdU0", tz:"Europe/Tallinn", cat:"野生动物", icon:"🦁", desc:"野生动物实况"},
+  {name:"Sanok Market Square", en:"Sanok Market Square", pEn:"Poland · Sanok", dEn:"Market square, live.", place:"波兰 · Sanok", lat:49.561, lon:22.207, yt:"ReqMDd6ZC-U", tz:"Europe/Warsaw", cat:"城市", icon:"🏙️", desc:"街景与城市实况"},
   /* ===== 2026-10-26 新增：YouTube 正在直播的频道（已逐个验证 live） ===== */
-  {name:"太平山顶", en:"The Peak, Hong Kong", place:"中国 · 香港", lat:22.276, lon:114.145, yt:"rOUKaSPbG7c", tz:"Asia/Hong_Kong", cat:"城市", icon:"🏙️", desc:"香港 24 小时山顶机位，俯瞰维多利亚港和港岛天际线。晚上灯火全开最值得，白天能一路看到海。"},
-  {name:"香港仔海港", en:"Aberdeen Harbour, Hong Kong", place:"中国 · 香港", lat:22.245, lon:114.156, yt:"KTaGQ7--iSc", tz:"Asia/Hong_Kong", cat:"水乡", icon:"🛥️", desc:"香港仔避风塘，渔船、舢板和水上人家，跟山顶的摩天楼是两个世界。傍晚渔船回港最热闹。"},
-  {name:"外滩天际线", en:"The Bund, Shanghai", place:"中国 · 上海", lat:31.240, lon:121.500, yt:"mizy6R7JGdM", tz:"Asia/Shanghai", cat:"城市", icon:"🏙️", desc:"东方明珠和黄浦江、外白渡桥一带的全景机位，24 小时高清。外滩亮灯的晚上最好看。"},
-  {name:"象山俯瞰台北 101", en:"Elephant Mountain, Taipei", place:"中国 · 台北", lat:25.033, lon:121.570, yt:"z_fY1pj1VBw", tz:"Asia/Taipei", cat:"城市", icon:"🏙️", desc:"台北观光即时影像，从象山顶看 101 大楼和台北盆地，傍晚到夜景是最经典的机位。"},
-  {name:"首尔 · 汉江", en:"Han River, Seoul", place:"韩国 · 首尔", lat:37.530, lon:126.940, yt:"vk5BHoDxXf0", tz:"Asia/Seoul", cat:"城市", icon:"🌉", desc:"汝矣岛一带的汉江 4K 机位，江面、大桥和首尔天际线一起入镜，晚上有整条江的夜景灯光。"},
-  {name:"滨海湾天际线", en:"Marina Bay, Singapore", place:"新加坡 · 滨海湾", lat:1.283, lon:103.860, yt:"y2P7ZERGcb0", tz:"Asia/Singapore", cat:"城市", icon:"🏙️", desc:"滨海湾天际线实况，顺带实时 PSI 空气指标。金沙、莲花和摩天轮都在一个画面里。"},
-  {name:"吉隆坡天际线", en:"KL Skyline", place:"马来西亚 · 吉隆坡", lat:3.157, lon:101.712, yt:"_1tcOO0CKsM", noembed:true, tz:"Asia/Kuala_Lumpur", cat:"城市", icon:"🇲🇾", desc:"吉隆坡市区天际线机位，配 lofi 音乐。双子塔在画面里，马来西亚晚上打开正好是它的白天。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
-  {name:"曼谷 · 素坤逸路", en:"Sukhumvit Road, Bangkok", place:"泰国 · 曼谷", lat:13.740, lon:100.562, yt:"UemFRPrl1hk", tz:"Asia/Bangkok", cat:"城市", icon:"🛺", desc:"素坤逸 Soi 11 的 4K 街景机位，摩托车、路边摊和天铁道口，曼谷最忙的一条街。"},
-  {name:"雷克雅未克市区", en:"Reykjavik City", place:"冰岛 · 雷克雅未克", lat:64.147, lon:-21.940, yt:"tYgGEC-ESTw", tz:"Atlantic/Reykjavik", cat:"城市", icon:"🇮🇸", desc:"世界最北首都的市区实况，彩色房子、教堂和远处的海。天气说变就变，晴天的雷克雅未克很美。"},
-  {name:"多伦多 · CN 塔", en:"CN Tower, Toronto", place:"加拿大 · 多伦多", lat:43.643, lon:-79.387, yt:"bbjwotvAvDM", tz:"America/Toronto", cat:"城市", icon:"🇨🇦", desc:"CN 塔和安大略湖的 4K 机位，配 lofi。湖面起雾起浪的时候最有加拿大冬天的感觉。"},
-  {name:"水坝广场", en:"Dam Square, Amsterdam", place:"荷兰 · 阿姆斯特丹", lat:52.373, lon:4.893, yt:"Gd9d4q6WvUY", tz:"Europe/Amsterdam", cat:"城市", icon:"🇳🇱", desc:"阿姆斯特丹市中心 Dam 广场的 4K 云台机位，王宫、纪念碑和全天候的人流。"},
-  {name:"涅瓦大街", en:"Nevsky Prospect, St. Petersburg", place:"俄罗斯 · 圣彼得堡", lat:59.935, lon:30.335, yt:"w_Dg2vC0tUE", tz:"Europe/Moscow", cat:"城市", icon:"🏛️", desc:"圣彼得堡涅瓦大街的街景实况，欧式建筑立面、电车轨道和人行道，很有旧俄都城的气质。"},
-  {name:"都柏林市区", en:"Dublin City", place:"爱尔兰 · 都柏林", lat:53.344, lon:-6.267, yt:"3nyPER2kzqk", tz:"Europe/Dublin", cat:"城市", icon:"🇮🇪", desc:"EarthCam 的都柏林市中心机位，街道、店铺和行人，配上爱尔兰说变就变的天气。"},
-  {name:"布莱恩特公园", en:"Bryant Park, New York", place:"美国 · 纽约", lat:40.754, lon:-73.983, yt:"QIIVxUJzJQw", tz:"America/New_York", cat:"城市", icon:"🌳", desc:"时代广场旁边的布莱恩特公园，纽约公共图书馆门口。冬天是溜冰场，夏天全是躺椅。"},
-  {name:"自由女神像", en:"Statue of Liberty", place:"美国 · 纽约", lat:40.689, lon:-74.044, yt:"o5Ie_LpZ9uk", tz:"America/New_York", cat:"城市", icon:"🗽", desc:"EarthCam 的自由女神像机位，看雕像和纽约港，邮轮进出港都是背景板。"},
-  {name:"金门大桥", en:"Golden Gate Bridge", place:"美国 · 旧金山", lat:37.820, lon:-122.478, yt:"BSWhGNXxT9A", tz:"America/Los_Angeles", cat:"城市", icon:"🌉", desc:"旧金山湾北岸机位，金门大桥和城市天际线同框。雾来了大桥只露出桥顶，是这一带的日常。"},
-  {name:"马霍海滩", en:"Maho Beach, Sint Maarten", place:"荷属圣马丁 · 马霍", lat:18.045, lon:-63.071, yt:"2IQmpCXbOmM", tz:"America/Lower_Princes", cat:"城市", icon:"✈️", desc:"朱莉安娜公主机场尽头的海滩，航班进场超低空掠过人群头顶，全世界最有名的拍飞机机位。"},
-  {name:"基韦斯特 · 杜瓦尔街", en:"Duval Street, Key West", place:"美国 · 佛罗里达 · 基韦斯特", lat:24.559, lon:-81.807, yt:"H_kswlYZN5o", tz:"America/New_York", cat:"城市", icon:"🎷", desc:"美国本土最南端城市的主街，酒吧、巡游车队和全天候的游客，海明威的故乡。"},
-  {name:"威廉斯塔德彩色河岸", en:"Handelskade, Willemstad", place:"库拉索 · 威廉斯塔德", lat:12.104, lon:-68.935, yt:"28U-t3fA9ks", tz:"America/Curacao", cat:"水乡", icon:"🏝️", desc:"世界遗产级的彩色河岸街景，荷兰殖民风格的糖果色房子一字排开，加勒比最上镜的一条街。"},
-  {name:"鹰海滩", en:"Eagle Beach, Aruba", place:"阿鲁巴 · 鹰海滩", lat:12.552, lon:-70.057, yt:"_ZXMjk5K0_s", tz:"America/Aruba", cat:"水乡", icon:"🏖️", desc:"阿鲁巴最有名的海滩，碧绿浅水和低矮的 divi-divi 树，常年有风所以玩帆板的特别多。"},
-  {name:"德尔卡门海滩", en:"Puerto del Carmen, Lanzarote", place:"西班牙 · 加那利群岛 · 兰萨罗特", lat:28.923, lon:-13.666, yt:"YlRJXr4fCgM", tz:"Atlantic/Canary", cat:"水乡", icon:"🏖️", desc:"加那利群岛兰萨罗特岛的沙滩机位，火山岛海岸和常年二十多度的海水，欧洲人过冬的后花园。"},
-  {name:"德卢斯运河", en:"Duluth Canal", place:"美国 · 明尼苏达 · 德卢斯", lat:46.781, lon:-92.093, yt:"HPS48TMmNag", tz:"America/Chicago", cat:"水乡", icon:"⚓", desc:"苏必利尔湖畔的港口运河，货轮和吊桥是主角。湖上起雾时很有五大湖的味道。"},
-  {name:"大港船政", en:"Grand Harbour, Malta", place:"马耳他 · 瓦莱塔", lat:35.898, lon:14.513, yt:"sQiZby6_rsE", tz:"Europe/Malta", cat:"水乡", icon:"🚢", desc:"瓦莱塔大港的 4K 船政机位，白天数邮轮和货轮，晚上变成安静的港口夜景。"},
-  {name:"苏梅岛 · Crystal Bay", en:"Crystal Bay, Koh Samui", place:"泰国 · 苏梅岛", lat:9.440, lon:100.060, yt:"Fw9hgttWzIg", tz:"Asia/Bangkok", cat:"水乡", icon:"🏖️", desc:"苏梅岛拉迈海滩的 4K 机位，椰林、白沙和海湾，一派热带海岛日常。"},
-  {name:"Lake Hood 水上飞机基地", en:"Lake Hood Seaplane Base", place:"美国 · 阿拉斯加 · 安克雷奇", lat:61.221, lon:-149.972, yt:"61pi8UjLOlo", tz:"America/Anchorage", cat:"水乡", icon:"🛩️", desc:"世界上最忙的水上飞机基地，螺旋桨飞机不停起降，背后是阿拉斯加的雪山。"},
-  {name:"圣伊夫港", en:"St Ives Harbour", place:"英国 · 康沃尔 · 圣伊夫", lat:50.211, lon:-5.480, yt:"Iu5zg5iqVmw", tz:"Europe/London", cat:"水乡", icon:"⚓", desc:"康沃尔海岸的艺术小镇渔港，渔船、防波堤和海鸥，潮水退了会露出整片沙滩，英国夏天的海边就该是这样。"},
-  {name:"富士山 · 河口湖", en:"Mount Fuji from Lake Kawaguchi", place:"日本 · 山梨 · 河口湖", lat:35.517, lon:138.753, yt:"bdUbACCWmoY", tz:"Asia/Tokyo", cat:"自然", icon:"🗻", desc:"从大石公园看富士山，逆富士就出自这一带。晴天率最高的富士山机位之一，清晨湖面最平。"},
-  {name:"尼亚加拉大瀑布", en:"Niagara Falls", place:"美国 / 加拿大 · 尼亚加拉", lat:43.083, lon:-79.074, yt:"7gBzLGlJnwk", tz:"America/New_York", cat:"自然", icon:"🌊", desc:"马蹄瀑布正面机位，水汽常年不散。夜里两岸打灯，是另一套完全不同的颜色。"},
-  {name:"埃特纳火山", en:"Mount Etna", place:"意大利 · 西西里 · 埃特纳", lat:37.755, lon:14.995, yt:"EGk3Mr0OshE", tz:"Europe/Rome", cat:"自然", icon:"🌋", desc:"欧洲最活跃的火山，多机位轮换。喷发期能看到火山口喷烟柱，山顶常年积雪对比很强。"},
-  {name:"马荣火山", en:"Mayon Volcano", place:"菲律宾 · 阿尔拜", lat:13.256, lon:123.685, yt:"UDAZWxehMAI", tz:"Asia/Manila", cat:"自然", icon:"🌋", desc:"世界上最完美的圆锥火山，目前正在活动。夜空里火山口泛红光的时候最震撼。"},
-  {name:"富埃戈火山", en:"Fuego Volcano", place:"危地马拉 · 富埃戈", lat:14.475, lon:-90.880, yt:"cNW2nytVkfs", tz:"America/Guatemala", cat:"自然", icon:"🌋", desc:"几乎天天在喷的火山，火山灰柱和熔岩流是日常。夜里看喷发最清楚。"},
-  {name:"珠峰 · Hotel Everest View", en:"Everest Panorama, Nepal", place:"尼泊尔 · 索卢昆布 · 海拔 3880 米", lat:27.810, lon:86.710, yt:"EGya8tERDnY", tz:"Asia/Kathmandu", cat:"自然", icon:"🏔️", desc:"海拔 3880 米酒店的全天空机位，白天对着珠峰和昆布里峰的雪壁，夜里换成喜马拉雅星空，云一散就是整片山脊。"},
-  {name:"南崎巴札", en:"Namche Bazaar, Nepal", place:"尼泊尔 · 索卢昆布 · 海拔 3440 米", lat:27.804, lon:86.710, yt:"wguWmJnOly8", tz:"Asia/Kathmandu", cat:"自然", icon:"🏘️", desc:"珠峰线路上的补给重镇，房子层层叠在山坡上，背后就是 Kongde 和 Thamserku 的雪壁。这个机位可以直接在网页里播。"},
-  {name:"卢卡拉机场", en:"Lukla Airport", place:"尼泊尔 · 索卢昆布 · 卢卡拉", lat:27.686, lon:86.729, yt:"am9KDRSZQ-0", noembed:true, tz:"Asia/Kathmandu", cat:"自然", icon:"🛫", desc:"世界最危险的机场之一，去珠峰大本营的必经之门。短距起降的小飞机一头扎进喜马拉雅。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
-  {name:"艾格峰三山", en:"Eiger, Mönch & Jungfrau", place:"瑞士 · 贝阿滕贝格", lat:46.700, lon:7.800, yt:"UcfudevG7v8", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"从贝阿滕贝格木屋看艾格、僧侣峰和少女峰三连峰，加上图恩湖。瑞士明信片机位。"},
-  {name:"格林德茨山村", en:"Grimentz, Valais", place:"瑞士 · 瓦莱州 · 格林德茨", lat:46.183, lon:7.583, yt:"iCxfe27HpaY", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"瓦莱州山村的机位，木屋、教堂和背后的阿尔卑斯山坡，冬天雪景夏天草甸。"},
-  {name:"门登霍尔冰川", en:"Mendenhall Glacier", place:"美国 · 阿拉斯加 · 朱诺", lat:58.440, lon:-134.570, yt:"jJI5w_RVGtQ", tz:"America/Anchorage", cat:"自然", icon:"🏔️", desc:"朱诺郊外的冰川机位，冰川舌和山坡，还会有野山羊路过。冰川这些年退得很明显。"},
-  {name:"华盛顿山天文台", en:"Mount Washington Observatory", place:"美国 · 新罕布什尔 · 华盛顿山", lat:44.271, lon:-71.303, yt:"Z27ghRYocJ4", tz:"America/New_York", cat:"自然", icon:"🌡️", desc:"曾经测出 372 km/h 地表最强风的地方，山顶观景台机位。云海和树线以上的苔原风光。"},
-  {name:"列维滑雪场", en:"Levi Ski Resort", place:"芬兰 · 拉普兰 · 列维", lat:67.804, lon:24.802, yt:"LwihxyJ4V20", tz:"Europe/Helsinki", cat:"自然", icon:"🎿", desc:"拉普兰最大滑雪场的山顶机位，雪道、缆车和森林。非雪季是绿色的山和徒步路线。"},
-  {name:"伊卢利萨特冰山", en:"Ilulissat Icefjord", place:"格陵兰 · 伊卢利萨特", lat:69.220, lon:-51.100, yt:"VVa_nZtUofE", tz:"America/Godthab", cat:"自然", icon:"🧊", desc:"联合国世界遗产的冰湾，巨型冰山缓缓移动崩塌。午夜太阳的季节太阳几乎不下山。"},
-  {name:"成都大熊猫基地", en:"Chengdu Panda Base", place:"中国 · 成都", lat:30.738, lon:104.042, yt:"SUXPnIEpbn4", tz:"Asia/Shanghai", cat:"野生动物", icon:"🐼", desc:"成都大熊猫繁育研究基地的 24 小时机位，滚滚吃饭、睡觉和拆家。马来西亚早上来正好是它们的上午。"},
-  {name:"蒙特雷湾海藻森林", en:"Kelp Forest, Monterey Bay", place:"美国 · 加州 · 蒙特雷", lat:36.618, lon:-121.902, yt:"w3LjpFhySTg", tz:"America/Los_Angeles", cat:"野生动物", icon:"🐟", desc:"蒙特雷湾水族馆的招牌机位，巨藻林里的小鱼群和水流。阴天时窗口光线偏暗是正常的。"},
-  {name:"开曼珊瑚礁", en:"Utopia Village Reef, Grand Cayman", place:"开曼群岛 · 七英里海滩", lat:19.340, lon:-81.380, yt:"1zcIUk66HX4", tz:"America/Cayman", cat:"野生动物", icon:"🪸", desc:"explore.org 的水下珊瑚礁机位，在开曼七英里海滩的防波堤墙上，偶尔有鱼群和潜水员经过。"},
-  {name:"企鹅馆", en:"Penguin Habitat, Galveston", place:"美国 · 德州 · 加尔维斯顿", lat:29.274, lon:-94.875, yt:"HHp4rjhJsWI", tz:"America/Chicago", cat:"野生动物", icon:"🐧", desc:"Moody Gardens 水族馆的企鹅栖息地，一群企鹅游泳、排队上岸，比想象中热闹。"},
-  {name:"温哥华海獭", en:"Sea Otters, Vancouver Aquarium", place:"加拿大 · 温哥华", lat:49.300, lon:-123.132, yt:"9mg9PoFEX2U", tz:"America/Vancouver", cat:"野生动物", icon:"🦦", desc:"温哥华水族馆的海獭机位，仰泳、剥贝壳和整理毛发，随时能看到名场面。"},
-  {name:"ol Donyo Lodge", en:"ol Donyo Lodge, Kenya", place:"肯尼亚 · 丘卢山", lat:-2.550, lon:37.630, yt:"XsOU8JnEpNM", tz:"Africa/Nairobi", cat:"野生动物", icon:"🦒", desc:"Africam 在丘卢山保护区的 Lodge 机位，长颈鹿、斑马和羚羊轮着来喝水，背景是乞力马扎罗方向。"},
-  {name:"泰姆贝大象公园", en:"Tembe Elephant Park", place:"南非 · 夸祖鲁-纳塔尔 · 泰姆贝", lat:-26.880, lon:32.420, yt:"gdrNUUf-cQw", tz:"Africa/Johannesburg", cat:"野生动物", icon:"🐘", desc:"Africam 的大象公园水坑机位，非洲最大的象牙象群之一。傍晚整群大象来喝水最壮观。"},
-  {name:"康奈尔投喂站", en:"Sapsucker Woods FeederWatch", place:"美国 · 纽约州 · 伊萨卡", lat:42.480, lon:-76.450, yt:"x10vL6_47Dw", tz:"America/New_York", cat:"野生动物", icon:"🐦", desc:"康奈尔鸟类实验室的投喂器机位，北美候鸟和红松鼠全天候轮播，认鸟入门首选。"},
-  {name:"大熊湖秃鹰巢", en:"Big Bear Bald Eagle Nest", place:"美国 · 加州 · 大熊湖", lat:34.244, lon:-116.906, yt:"B4-L2nfGcuE", tz:"America/Los_Angeles", cat:"野生动物", icon:"🦅", desc:"FOBBV 的秃鹰巢 4K 机位，看大熊湖和鹰爸鹰妈轮班。孵蛋季和育雏季最有戏。"},
-  {name:"费尔班克斯极光", en:"Fairbanks Aurora Cam", place:"美国 · 阿拉斯加 · 费尔班克斯", lat:64.837, lon:-147.716, yt:"O52zDyxg5QI", tz:"America/Anchorage", cat:"星空", icon:"🌌", desc:"explore.org 的极光机位，在极光带正下方。阿拉斯加的冬夜极光出现率很高，值得挂着等。"},
-  {name:"NASA 官方空间站直播", en:"NASA ISS Live", place:"近地轨道 · NASA 官方", lat:0, lon:0, yt:"ROboUHfPUrU", tz:"UTC", cat:"太空", icon:"🛰️", desc:"NASA 官方频道的国际空间站高清直播，和 Sen 的 4K 机位互为备份。飞到夜面时会黑一阵，属正常。", iss:true},
+  {name:"太平山顶", en:"The Peak, Hong Kong", pEn:"Hong Kong, China · Hong Kong", dEn:"24/7 from the Peak, looking down over Victoria Harbour and the island skyline. Best after dark.", place:"中国香港 · 香港", lat:22.276, lon:114.145, yt:"rOUKaSPbG7c", tz:"Asia/Hong_Kong", cat:"城市", icon:"🏙️", desc:"香港 24 小时山顶机位，俯瞰维多利亚港和港岛天际线。晚上灯火全开最值得，白天能一路看到海。"},
+  {name:"香港仔海港", en:"Aberdeen Harbour, Hong Kong", pEn:"Hong Kong, China · Hong Kong", dEn:"Aberdeen typhoon shelter: fishing boats, sampans and houseboats — a different world from the towers above.", place:"中国香港 · 香港", lat:22.245, lon:114.156, yt:"KTaGQ7--iSc", tz:"Asia/Hong_Kong", cat:"水乡", icon:"🛥️", desc:"香港仔避风塘，渔船、舢板和水上人家，跟山顶的摩天楼是两个世界。傍晚渔船回港最热闹。"},
+  {name:"外滩天际线", en:"The Bund, Shanghai", pEn:"China · Shanghai", dEn:"Panorama of the Bund, the Huangpu and Waibaidu Bridge, 24h HD. Best when the lights come on.", place:"中国 · 上海", lat:31.240, lon:121.500, yt:"mizy6R7JGdM", tz:"Asia/Shanghai", cat:"城市", icon:"🏙️", desc:"东方明珠和黄浦江、外白渡桥一带的全景机位，24 小时高清。外滩亮灯的晚上最好看。"},
+  {name:"象山俯瞰台北 101", en:"Elephant Mountain, Taipei", pEn:"Taiwan, China · Taipei", dEn:"Official Taipei camera from Elephant Mountain — Taipei 101 and the basin, classic from dusk on.", place:"中国台湾 · 台北", lat:25.033, lon:121.570, yt:"z_fY1pj1VBw", tz:"Asia/Taipei", cat:"城市", icon:"🏙️", desc:"台北观光即时影像，从象山顶看 101 大楼和台北盆地，傍晚到夜景是最经典的机位。"},
+  {name:"首尔 · 汉江", en:"Han River, Seoul", pEn:"South Korea · Seoul", dEn:"4K on the Han River at Yeouido: water, bridges and skyline. The whole river lights up at night.", place:"韩国 · 首尔", lat:37.530, lon:126.940, yt:"vk5BHoDxXf0", tz:"Asia/Seoul", cat:"城市", icon:"🌉", desc:"汝矣岛一带的汉江 4K 机位，江面、大桥和首尔天际线一起入镜，晚上有整条江的夜景灯光。"},
+  {name:"滨海湾天际线", en:"Marina Bay, Singapore", pEn:"Singapore · Marina Bay", dEn:"Marina Bay skyline with a live PSI air-quality readout. Marina Bay Sands, the lotus and the Flyer in one frame.", place:"新加坡 · 滨海湾", lat:1.283, lon:103.860, yt:"y2P7ZERGcb0", tz:"Asia/Singapore", cat:"城市", icon:"🏙️", desc:"滨海湾天际线实况，顺带实时 PSI 空气指标。金沙、莲花和摩天轮都在一个画面里。"},
+  {name:"吉隆坡天际线", en:"KL Skyline", pEn:"Malaysia · Kuala Lumpur", dEn:"KL skyline with lofi audio; the Twin Towers are in frame. (This channel blocks third-party embedding — use the button to watch on YouTube.)", place:"马来西亚 · 吉隆坡", lat:3.157, lon:101.712, yt:"_1tcOO0CKsM", noembed:true, tz:"Asia/Kuala_Lumpur", cat:"城市", icon:"🇲🇾", desc:"吉隆坡市区天际线机位，配 lofi 音乐。双子塔在画面里，马来西亚晚上打开正好是它的白天。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
+  {name:"曼谷 · 素坤逸路", en:"Sukhumvit Road, Bangkok", pEn:"Thailand · Bangkok", dEn:"4K on Sukhumvit Soi 11: motorbikes, street stalls, the skytrain crossing. Bangkok's busiest street.", place:"泰国 · 曼谷", lat:13.740, lon:100.562, yt:"UemFRPrl1hk", tz:"Asia/Bangkok", cat:"城市", icon:"🛺", desc:"素坤逸 Soi 11 的 4K 街景机位，摩托车、路边摊和天铁道口，曼谷最忙的一条街。"},
+  {name:"雷克雅未克市区", en:"Reykjavik City", pEn:"Iceland · Reykjavík", dEn:"The northernmost capital: colourful houses, the church, and the sea beyond. Weather flips fast.", place:"冰岛 · 雷克雅未克", lat:64.147, lon:-21.940, yt:"tYgGEC-ESTw", tz:"Atlantic/Reykjavik", cat:"城市", icon:"🇮🇸", desc:"世界最北首都的市区实况，彩色房子、教堂和远处的海。天气说变就变，晴天的雷克雅未克很美。"},
+  {name:"多伦多 · CN 塔", en:"CN Tower, Toronto", pEn:"Canada · Toronto", dEn:"4K on the CN Tower and Lake Ontario with lofi. Fog and swell off the lake is peak Canadian winter.", place:"加拿大 · 多伦多", lat:43.643, lon:-79.387, yt:"bbjwotvAvDM", tz:"America/Toronto", cat:"城市", icon:"🇨🇦", desc:"CN 塔和安大略湖的 4K 机位，配 lofi。湖面起雾起浪的时候最有加拿大冬天的感觉。"},
+  {name:"水坝广场", en:"Dam Square, Amsterdam", pEn:"Netherlands · Amsterdam", dEn:"4K PTZ on Dam Square: the palace, the monument and a never-ending crowd.", place:"荷兰 · 阿姆斯特丹", lat:52.373, lon:4.893, yt:"Gd9d4q6WvUY", tz:"Europe/Amsterdam", cat:"城市", icon:"🇳🇱", desc:"阿姆斯特丹市中心 Dam 广场的 4K 云台机位，王宫、纪念碑和全天候的人流。"},
+  {name:"涅瓦大街", en:"Nevsky Prospect, St. Petersburg", pEn:"Russia · St Petersburg", dEn:"Nevsky Prospect: European facades, tram rails and pavement — old imperial capital mood.", place:"俄罗斯 · 圣彼得堡", lat:59.935, lon:30.335, yt:"w_Dg2vC0tUE", tz:"Europe/Moscow", cat:"城市", icon:"🏛️", desc:"圣彼得堡涅瓦大街的街景实况，欧式建筑立面、电车轨道和人行道，很有旧俄都城的气质。"},
+  {name:"都柏林市区", en:"Dublin City", pEn:"Ireland · Dublin", dEn:"EarthCam's city-centre view — streets, shops and Irish weather that changes by the minute.", place:"爱尔兰 · 都柏林", lat:53.344, lon:-6.267, yt:"3nyPER2kzqk", tz:"Europe/Dublin", cat:"城市", icon:"🇮🇪", desc:"EarthCam 的都柏林市中心机位，街道、店铺和行人，配上爱尔兰说变就变的天气。"},
+  {name:"布莱恩特公园", en:"Bryant Park, New York", pEn:"United States · New York", dEn:"Bryant Park behind the Public Library. Ice rink in winter, deck chairs all summer.", place:"美国 · 纽约", lat:40.754, lon:-73.983, yt:"QIIVxUJzJQw", tz:"America/New_York", cat:"城市", icon:"🌳", desc:"时代广场旁边的布莱恩特公园，纽约公共图书馆门口。冬天是溜冰场，夏天全是躺椅。"},
+  {name:"自由女神像", en:"Statue of Liberty", pEn:"United States · New York", dEn:"EarthCam's view of the statue and New York Harbor; cruise ships come and go behind.", place:"美国 · 纽约", lat:40.689, lon:-74.044, yt:"o5Ie_LpZ9uk", tz:"America/New_York", cat:"城市", icon:"🗽", desc:"EarthCam 的自由女神像机位，看雕像和纽约港，邮轮进出港都是背景板。"},
+  {name:"金门大桥", en:"Golden Gate Bridge", pEn:"United States · San Francisco", dEn:"North shore of the bay, bridge and skyline together. When the fog rolls in only the towers show.", place:"美国 · 旧金山", lat:37.820, lon:-122.478, yt:"BSWhGNXxT9A", tz:"America/Los_Angeles", cat:"城市", icon:"🌉", desc:"旧金山湾北岸机位，金门大桥和城市天际线同框。雾来了大桥只露出桥顶，是这一带的日常。"},
+  {name:"马霍海滩", en:"Maho Beach, Sint Maarten", pEn:"Sint Maarten · Maho", dEn:"The beach at the end of Juliana's runway — jets pass metres overhead. The world's most famous plane-spotting cam.", place:"荷属圣马丁 · 马霍", lat:18.045, lon:-63.071, yt:"2IQmpCXbOmM", tz:"America/Lower_Princes", cat:"城市", icon:"✈️", desc:"朱莉安娜公主机场尽头的海滩，航班进场超低空掠过人群头顶，全世界最有名的拍飞机机位。"},
+  {name:"基韦斯特 · 杜瓦尔街", en:"Duval Street, Key West", pEn:"United States · Florida · Key West", dEn:"Main street of the southernmost city: bars, convoys and tourists, Hemingway's hometown.", place:"美国 · 佛罗里达 · 基韦斯特", lat:24.559, lon:-81.807, yt:"H_kswlYZN5o", tz:"America/New_York", cat:"城市", icon:"🎷", desc:"美国本土最南端城市的主街，酒吧、巡游车队和全天候的游客，海明威的故乡。"},
+  {name:"威廉斯塔德彩色河岸", en:"Handelskade, Willemstad", pEn:"Curaçao · Willemstad", dEn:"UNESCO-listed waterfront: Dutch colonial houses in candy colours, the Caribbean's most photogenic street.", place:"库拉索 · 威廉斯塔德", lat:12.104, lon:-68.935, yt:"28U-t3fA9ks", tz:"America/Curacao", cat:"水乡", icon:"🏝️", desc:"世界遗产级的彩色河岸街景，荷兰殖民风格的糖果色房子一字排开，加勒比最上镜的一条街。"},
+  {name:"鹰海滩", en:"Eagle Beach, Aruba", pEn:"Aruba · Eagle Beach", dEn:"Aruba's best-known beach: turquoise shallows, divi-divi trees, and wind that keeps the kite surfers coming.", place:"阿鲁巴 · 鹰海滩", lat:12.552, lon:-70.057, yt:"_ZXMjk5K0_s", tz:"America/Aruba", cat:"水乡", icon:"🏖️", desc:"阿鲁巴最有名的海滩，碧绿浅水和低矮的 divi-divi 树，常年有风所以玩帆板的特别多。"},
+  {name:"德尔卡门海滩", en:"Puerto del Carmen, Lanzarote", pEn:"Spain · Canary Islands · Lanzarote", dEn:"Beach on Lanzarote: volcanic coast and water in the twenties all year. Europe's winter escape.", place:"西班牙 · 加那利群岛 · 兰萨罗特", lat:28.923, lon:-13.666, yt:"YlRJXr4fCgM", tz:"Atlantic/Canary", cat:"水乡", icon:"🏖️", desc:"加那利群岛兰萨罗特岛的沙滩机位，火山岛海岸和常年二十多度的海水，欧洲人过冬的后花园。"},
+  {name:"德卢斯运河", en:"Duluth Canal", pEn:"United States · Minnesota · Duluth", dEn:"Harbour canal on Lake Superior — freighters and the lift bridge. Fog on the lake gives it a Great Lakes feel.", place:"美国 · 明尼苏达 · 德卢斯", lat:46.781, lon:-92.093, yt:"HPS48TMmNag", tz:"America/Chicago", cat:"水乡", icon:"⚓", desc:"苏必利尔湖畔的港口运河，货轮和吊桥是主角。湖上起雾时很有五大湖的味道。"},
+  {name:"大港船政", en:"Grand Harbour, Malta", pEn:"Malta · Valletta", dEn:"4K on the Grand Harbour: count the ships by day, quiet harbour lights at night.", place:"马耳他 · 瓦莱塔", lat:35.898, lon:14.513, yt:"sQiZby6_rsE", tz:"Europe/Malta", cat:"水乡", icon:"🚢", desc:"瓦莱塔大港的 4K 船政机位，白天数邮轮和货轮，晚上变成安静的港口夜景。"},
+  {name:"苏梅岛 · Crystal Bay", en:"Crystal Bay, Koh Samui", pEn:"Thailand · Koh Samui", dEn:"4K on Lamai beach: palms, white sand and the bay. Tropical island routine.", place:"泰国 · 苏梅岛", lat:9.440, lon:100.060, yt:"Fw9hgttWzIg", tz:"Asia/Bangkok", cat:"水乡", icon:"🏖️", desc:"苏梅岛拉迈海滩的 4K 机位，椰林、白沙和海湾，一派热带海岛日常。"},
+  {name:"Lake Hood 水上飞机基地", en:"Lake Hood Seaplane Base", pEn:"United States · Alaska · Anchorage", dEn:"The world's busiest seaplane base — constant takeoffs and landings against Alaska's mountains.", place:"美国 · 阿拉斯加 · 安克雷奇", lat:61.221, lon:-149.972, yt:"61pi8UjLOlo", tz:"America/Anchorage", cat:"水乡", icon:"🛩️", desc:"世界上最忙的水上飞机基地，螺旋桨飞机不停起降，背后是阿拉斯加的雪山。"},
+  {name:"圣伊夫港", en:"St Ives Harbour", pEn:"United Kingdom · Cornwall · St Ives", dEn:"Cornish harbour: boats, breakwater and gulls. Low tide reveals the whole beach.", place:"英国 · 康沃尔 · 圣伊夫", lat:50.211, lon:-5.480, yt:"Iu5zg5iqVmw", tz:"Europe/London", cat:"水乡", icon:"⚓", desc:"康沃尔海岸的艺术小镇渔港，渔船、防波堤和海鸥，潮水退了会露出整片沙滩，英国夏天的海边就该是这样。"},
+  {name:"富士山 · 河口湖", en:"Mount Fuji from Lake Kawaguchi", pEn:"Japan · Yamanashi · Lake Kawaguchi", dEn:"Mount Fuji from Oishi Park, home of the famous reflection. Clearest skies, calmest water in the morning.", place:"日本 · 山梨 · 河口湖", lat:35.517, lon:138.753, yt:"bdUbACCWmoY", tz:"Asia/Tokyo", cat:"自然", icon:"🗻", desc:"从大石公园看富士山，逆富士就出自这一带。晴天率最高的富士山机位之一，清晨湖面最平。"},
+  {name:"尼亚加拉大瀑布", en:"Niagara Falls", pEn:"United States / Canada · Niagara", dEn:"Frontal view of Horseshoe Falls, always in mist. After dark the two sides light it in different colours.", place:"美国 / 加拿大 · 尼亚加拉", lat:43.083, lon:-79.074, yt:"7gBzLGlJnwk", tz:"America/New_York", cat:"自然", icon:"🌊", desc:"马蹄瀑布正面机位，水汽常年不散。夜里两岸打灯，是另一套完全不同的颜色。"},
+  {name:"埃特纳火山", en:"Mount Etna", pEn:"Italy · Sicily · Etna", dEn:"Europe's most active volcano, rotating cameras. Plumes during eruptions, snow on the summit most of the year.", place:"意大利 · 西西里 · 埃特纳", lat:37.755, lon:14.995, yt:"EGk3Mr0OshE", tz:"Europe/Rome", cat:"自然", icon:"🌋", desc:"欧洲最活跃的火山，多机位轮换。喷发期能看到火山口喷烟柱，山顶常年积雪对比很强。"},
+  {name:"马荣火山", en:"Mayon Volcano", pEn:"Philippines · Albay", dEn:"The world's most perfect cone, currently active. Best when the crater glows red at night.", place:"菲律宾 · 阿尔拜", lat:13.256, lon:123.685, yt:"UDAZWxehMAI", tz:"Asia/Manila", cat:"自然", icon:"🌋", desc:"世界上最完美的圆锥火山，目前正在活动。夜空里火山口泛红光的时候最震撼。"},
+  {name:"富埃戈火山", en:"Fuego Volcano", pEn:"Guatemala · Fuego", dEn:"Erupting almost daily — ash plumes and lava flows. Clearest after dark.", place:"危地马拉 · 富埃戈", lat:14.475, lon:-90.880, yt:"cNW2nytVkfs", tz:"America/Guatemala", cat:"自然", icon:"🌋", desc:"几乎天天在喷的火山，火山灰柱和熔岩流是日常。夜里看喷发最清楚。"},
+  {name:"珠峰 · Hotel Everest View", en:"Everest Panorama, Nepal", pEn:"Nepal · Solukhumbu · 3,880 m", dEn:"All-sky camera at the hotel: Everest and the Khumbu walls by day, Himalayan stars by night.", place:"尼泊尔 · 索卢昆布 · 海拔 3880 米", lat:27.810, lon:86.710, yt:"EGya8tERDnY", tz:"Asia/Kathmandu", cat:"自然", icon:"🏔️", desc:"海拔 3880 米酒店的全天空机位，白天对着珠峰和昆布里峰的雪壁，夜里换成喜马拉雅星空，云一散就是整片山脊。"},
+  {name:"南崎巴札", en:"Namche Bazaar, Nepal", pEn:"Nepal · Solukhumbu · 3,440 m", dEn:"The main supply town on the Everest trail, terraced up the slope below Kongde and Thamserku.", place:"尼泊尔 · 索卢昆布 · 海拔 3440 米", lat:27.804, lon:86.710, yt:"wguWmJnOly8", tz:"Asia/Kathmandu", cat:"自然", icon:"🏘️", desc:"珠峰线路上的补给重镇，房子层层叠在山坡上，背后就是 Kongde 和 Thamserku 的雪壁。这个机位可以直接在网页里播。"},
+  {name:"卢卡拉机场", en:"Lukla Airport", pEn:"Nepal · Solukhumbu · Lukla", dEn:"One of the world's most dangerous airports, gateway to Everest base camp. (This channel blocks embedding — use the button.)", place:"尼泊尔 · 索卢昆布 · 卢卡拉", lat:27.686, lon:86.729, yt:"am9KDRSZQ-0", noembed:true, tz:"Asia/Kathmandu", cat:"自然", icon:"🛫", desc:"世界最危险的机场之一，去珠峰大本营的必经之门。短距起降的小飞机一头扎进喜马拉雅。（该频道关闭了第三方嵌入，点下面按钮去 YouTube 看）"},
+  {name:"艾格峰三山", en:"Eiger, Mönch & Jungfrau", pEn:"Switzerland · Beatenberg", dEn:"Eiger, Mönch and Jungfrau from the Beatenberg chalets, with Lake Thun below. A Swiss postcard.", place:"瑞士 · 贝阿滕贝格", lat:46.700, lon:7.800, yt:"UcfudevG7v8", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"从贝阿滕贝格木屋看艾格、僧侣峰和少女峰三连峰，加上图恩湖。瑞士明信片机位。"},
+  {name:"格林德茨山村", en:"Grimentz, Valais", pEn:"Switzerland · Valais · Grindelwald", dEn:"Valais village: chalets, church and alpine slopes. Snow in winter, meadows in summer.", place:"瑞士 · 瓦莱州 · 格林德茨", lat:46.183, lon:7.583, yt:"iCxfe27HpaY", tz:"Europe/Zurich", cat:"自然", icon:"🏔️", desc:"瓦莱州山村的机位，木屋、教堂和背后的阿尔卑斯山坡，冬天雪景夏天草甸。"},
+  {name:"门登霍尔冰川", en:"Mendenhall Glacier", pEn:"United States · Alaska · Juneau", dEn:"Glacier tongue and slopes outside Juneau; mountain goats wander past. The ice has retreated noticeably.", place:"美国 · 阿拉斯加 · 朱诺", lat:58.440, lon:-134.570, yt:"jJI5w_RVGtQ", tz:"America/Anchorage", cat:"自然", icon:"🏔️", desc:"朱诺郊外的冰川机位，冰川舌和山坡，还会有野山羊路过。冰川这些年退得很明显。"},
+  {name:"华盛顿山天文台", en:"Mount Washington Observatory", pEn:"United States · New Hampshire · Mount Washington", dEn:"Where a 372 km/h surface wind was once recorded. Cloud sea and tundra above the treeline.", place:"美国 · 新罕布什尔 · 华盛顿山", lat:44.271, lon:-71.303, yt:"Z27ghRYocJ4", tz:"America/New_York", cat:"自然", icon:"🌡️", desc:"曾经测出 372 km/h 地表最强风的地方，山顶观景台机位。云海和树线以上的苔原风光。"},
+  {name:"列维滑雪场", en:"Levi Ski Resort", pEn:"Finland · Lapland · Levi", dEn:"Summit of Lapland's biggest ski resort: runs, lifts and forest. Green hills and hiking trails off-season.", place:"芬兰 · 拉普兰 · 列维", lat:67.804, lon:24.802, yt:"LwihxyJ4V20", tz:"Europe/Helsinki", cat:"自然", icon:"🎿", desc:"拉普兰最大滑雪场的山顶机位，雪道、缆车和森林。非雪季是绿色的山和徒步路线。"},
+  {name:"伊卢利萨特冰山", en:"Ilulissat Icefjord", pEn:"Greenland · Ilulissat", dEn:"UNESCO ice fjord — giant bergs drifting and calving. In midnight-sun season the sun barely sets.", place:"格陵兰 · 伊卢利萨特", lat:69.220, lon:-51.100, yt:"VVa_nZtUofE", tz:"America/Godthab", cat:"自然", icon:"🧊", desc:"联合国世界遗产的冰湾，巨型冰山缓缓移动崩塌。午夜太阳的季节太阳几乎不下山。"},
+  {name:"成都大熊猫基地", en:"Chengdu Panda Base", pEn:"China · Chengdu", dEn:"24/7 at the Chengdu panda base: eating, sleeping and wrecking things.", place:"中国 · 成都", lat:30.738, lon:104.042, yt:"SUXPnIEpbn4", tz:"Asia/Shanghai", cat:"野生动物", icon:"🐼", desc:"成都大熊猫繁育研究基地的 24 小时机位，滚滚吃饭、睡觉和拆家。马来西亚早上来正好是它们的上午。"},
+  {name:"蒙特雷湾海藻森林", en:"Kelp Forest, Monterey Bay", pEn:"United States · California · Monterey", dEn:"Monterey Bay Aquarium's kelp forest tank — schools of fish and moving water. Dim on overcast days, which is normal.", place:"美国 · 加州 · 蒙特雷", lat:36.618, lon:-121.902, yt:"w3LjpFhySTg", tz:"America/Los_Angeles", cat:"野生动物", icon:"🐟", desc:"蒙特雷湾水族馆的招牌机位，巨藻林里的小鱼群和水流。阴天时窗口光线偏暗是正常的。"},
+  {name:"开曼珊瑚礁", en:"Utopia Village Reef, Grand Cayman", pEn:"Cayman Islands · Seven Mile Beach", dEn:"explore.org's underwater reef cam on the breakwater wall; fish and the occasional diver.", place:"开曼群岛 · 七英里海滩", lat:19.340, lon:-81.380, yt:"1zcIUk66HX4", tz:"America/Cayman", cat:"野生动物", icon:"🪸", desc:"explore.org 的水下珊瑚礁机位，在开曼七英里海滩的防波堤墙上，偶尔有鱼群和潜水员经过。"},
+  {name:"企鹅馆", en:"Penguin Habitat, Galveston", pEn:"United States · Texas · Galveston", dEn:"Moody Gardens penguin habitat — swimming, queueing up, more chaotic than expected.", place:"美国 · 德州 · 加尔维斯顿", lat:29.274, lon:-94.875, yt:"HHp4rjhJsWI", tz:"America/Chicago", cat:"野生动物", icon:"🐧", desc:"Moody Gardens 水族馆的企鹅栖息地，一群企鹅游泳、排队上岸，比想象中热闹。"},
+  {name:"温哥华海獭", en:"Sea Otters, Vancouver Aquarium", pEn:"Canada · Vancouver", dEn:"Vancouver Aquarium's otters: back-floating, shell-cracking, grooming. Showtime around the clock.", place:"加拿大 · 温哥华", lat:49.300, lon:-123.132, yt:"9mg9PoFEX2U", tz:"America/Vancouver", cat:"野生动物", icon:"🦦", desc:"温哥华水族馆的海獭机位，仰泳、剥贝壳和整理毛发，随时能看到名场面。"},
+  {name:"ol Donyo Lodge", en:"ol Donyo Lodge, Kenya", pEn:"Kenya · Chyulu Hills", dEn:"Africam at the lodge waterhole: giraffe, zebra and antelope, with Kilimanjaro somewhere behind.", place:"肯尼亚 · 丘卢山", lat:-2.550, lon:37.630, yt:"XsOU8JnEpNM", tz:"Africa/Nairobi", cat:"野生动物", icon:"🦒", desc:"Africam 在丘卢山保护区的 Lodge 机位，长颈鹿、斑马和羚羊轮着来喝水，背景是乞力马扎罗方向。"},
+  {name:"泰姆贝大象公园", en:"Tembe Elephant Park", pEn:"South Africa · KwaZulu-Natal · Tembe", dEn:"Africam's waterhole in Tembe Elephant Park — home to some of Africa's great tuskers. Herds arrive at dusk.", place:"南非 · 夸祖鲁-纳塔尔 · 泰姆贝", lat:-26.880, lon:32.420, yt:"gdrNUUf-cQw", tz:"Africa/Johannesburg", cat:"野生动物", icon:"🐘", desc:"Africam 的大象公园水坑机位，非洲最大的象牙象群之一。傍晚整群大象来喝水最壮观。"},
+  {name:"康奈尔投喂站", en:"Sapsucker Woods FeederWatch", pEn:"United States · New York · Ithaca", dEn:"Cornell Lab feeder cam: migrants and red squirrels around the clock. The best way to start birding.", place:"美国 · 纽约州 · 伊萨卡", lat:42.480, lon:-76.450, yt:"x10vL6_47Dw", tz:"America/New_York", cat:"野生动物", icon:"🐦", desc:"康奈尔鸟类实验室的投喂器机位，北美候鸟和红松鼠全天候轮播，认鸟入门首选。"},
+  {name:"大熊湖秃鹰巢", en:"Big Bear Bald Eagle Nest", pEn:"United States · California · Big Bear Lake", dEn:"FOBBV's 4K bald eagle nest; the parents swap shifts. Best during incubation and chick season.", place:"美国 · 加州 · 大熊湖", lat:34.244, lon:-116.906, yt:"B4-L2nfGcuE", tz:"America/Los_Angeles", cat:"野生动物", icon:"🦅", desc:"FOBBV 的秃鹰巢 4K 机位，看大熊湖和鹰爸鹰妈轮班。孵蛋季和育雏季最有戏。"},
+  {name:"费尔班克斯极光", en:"Fairbanks Aurora Cam", pEn:"United States · Alaska · Fairbanks", dEn:"explore.org's aurora cam directly under the auroral oval. High hit rate on winter nights.", place:"美国 · 阿拉斯加 · 费尔班克斯", lat:64.837, lon:-147.716, yt:"O52zDyxg5QI", tz:"America/Anchorage", cat:"星空", icon:"🌌", desc:"explore.org 的极光机位，在极光带正下方。阿拉斯加的冬夜极光出现率很高，值得挂着等。"},
+  {name:"NASA 官方空间站直播", en:"NASA ISS Live", pEn:"Low Earth orbit · NASA", dEn:"NASA's ISS feed, a backup for Sen's 4K view. Goes dark on the night side, which is normal.", place:"近地轨道 · NASA 官方", lat:0, lon:0, yt:"ROboUHfPUrU", tz:"UTC", cat:"太空", icon:"🛰️", desc:"NASA 官方频道的国际空间站高清直播，和 Sen 的 4K 机位互为备份。飞到夜面时会黑一阵，属正常。", iss:true},
   /* ===== 国内源（B站慢直播）：B站/央视频/央视网全部禁止第三方 iframe，API 见外部 Origin 直接 403，
      所以只能放「实时关键帧快照」——约每 30 秒换一张，点「在源站打开」去 B 站看完整直播 ===== */
-  {name:"维港夜景 · 慢直播", en:"Victoria Harbour Slow-Live", place:"中国 · 香港", lat:22.293, lon:114.169, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260055000013131453n639q7.jpg", page:"https://live.bilibili.com/13131453", refresh:30, tz:"Asia/Hong_Kong", cat:"城市", icon:"🌃", desc:"B 站 24 小时慢直播间的实时关键帧快照，无人机视角看维多利亚港。想看连续画面点下面按钮去 B 站直播间。"},
-  {name:"玉龙雪山 · 大研古城", en:"Yulong Snow Mountain, Lijiang", place:"中国 · 云南 · 丽江", lat:26.872, lon:100.229, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057000030487299bnzpta.jpg", page:"https://live.bilibili.com/30487299", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"丽江实时风景慢直播机位，玉龙雪山和大研古城同框。清晨有机会看到日照金山。B 站房间的实时关键帧快照。"},
-  {name:"南迦巴瓦日照金山", en:"Namcha Barwa, Nyingchi", place:"中国 · 西藏 · 米林", lat:29.632, lon:95.061, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057001994821649hbwy50.jpg", page:"https://live.bilibili.com/1994821649", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"米林市旅游协会的南迦巴瓦慢直播。中国最美雪山之一，日照金山每天只出现清晨几分钟，看到就是赚到。"},
-  {name:"青岛海边", en:"Qingdao Seafront", place:"中国 · 山东 · 青岛", lat:36.067, lon:120.343, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022570982xw7b2c.jpg", page:"https://live.bilibili.com/22570982", refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"半岛都市报的海边慢直播机位，面朝大海。白天看海晚上看灯，红瓦绿树碧海蓝天是青岛的招牌。"},
-  {name:"高崖子天文台全天相机", en:"Gaoyazi Observatory All-Sky", place:"中国 · 青海 · 德令哈", lat:37.370, lon:97.360, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022325806o18uos.jpg", page:"https://live.bilibili.com/22325806", refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🔭", desc:"共享天文台的全天相机，白天拍云、晚上拍星。西北高原夜空透明度极高，银河季值得挂着看。"},];
+  {name:"维港夜景 · 慢直播", en:"Victoria Harbour Slow-Live", pEn:"Hong Kong, China · Hong Kong", dEn:"Live keyframe from a 24h Bilibili slow-live room — drone view over Victoria Harbour. Use the button for the full stream.", place:"中国香港 · 香港", lat:22.293, lon:114.169, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260055000013131453n639q7.jpg", page:"https://live.bilibili.com/13131453", refresh:30, tz:"Asia/Hong_Kong", cat:"城市", icon:"🌃", desc:"B 站 24 小时慢直播间的实时关键帧快照，无人机视角看维多利亚港。想看连续画面点下面按钮去 B 站直播间。"},
+  {name:"玉龙雪山 · 大研古城", en:"Yulong Snow Mountain, Lijiang", pEn:"China · Yunnan · Lijiang", dEn:"Lijiang slow-live: Jade Dragon Snow Mountain above Dayan old town. Dawn sometimes brings the golden summit.", place:"中国 · 云南 · 丽江", lat:26.872, lon:100.229, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057000030487299bnzpta.jpg", page:"https://live.bilibili.com/30487299", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"丽江实时风景慢直播机位，玉龙雪山和大研古城同框。清晨有机会看到日照金山。B 站房间的实时关键帧快照。"},
+  {name:"南迦巴瓦日照金山", en:"Namcha Barwa, Nyingchi", pEn:"China · Tibet · Mainling", dEn:"Namcha Barwa slow-live from the Mainling tourism association. The golden sunrise lasts only minutes.", place:"中国 · 西藏 · 米林", lat:29.632, lon:95.061, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057001994821649hbwy50.jpg", page:"https://live.bilibili.com/1994821649", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"米林市旅游协会的南迦巴瓦慢直播。中国最美雪山之一，日照金山每天只出现清晨几分钟，看到就是赚到。"},
+  {name:"青岛海边", en:"Qingdao Seafront", pEn:"China · Shandong · Qingdao", dEn:"Seaside slow-live facing the sea — red roofs, green trees, blue water. Qingdao's signature combination.", place:"中国 · 山东 · 青岛", lat:36.067, lon:120.343, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022570982xw7b2c.jpg", page:"https://live.bilibili.com/22570982", refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"半岛都市报的海边慢直播机位，面朝大海。白天看海晚上看灯，红瓦绿树碧海蓝天是青岛的招牌。"},
+  {name:"高崖子天文台全天相机", en:"Gaoyazi Observatory All-Sky", pEn:"China · Qinghai · Delingha", dEn:"All-sky camera at a shared observatory: clouds by day, stars by night. Very transparent plateau sky.", place:"中国 · 青海 · 德令哈", lat:37.370, lon:97.360, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022325806o18uos.jpg", page:"https://live.bilibili.com/22325806", refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🔭", desc:"共享天文台的全天相机，白天拍云、晚上拍星。西北高原夜空透明度极高，银河季值得挂着看。"},];
 
 const CATS = {"城市":"#ff9f43","水乡":"#54c8ff","自然":"#7bed6d","野生动物":"#ffd32a","星空":"#b39dff","太空":"#ff7eb6"};
+
+/* ============================================================
+   多语言（中文 / English）+ 左栏筛选
+   ============================================================ */
+const CAT_EN={"城市":"City","水乡":"Coast & Water","自然":"Nature","野生动物":"Wildlife","星空":"Night Sky","太空":"Space"};
+const UI={
+  zh:{
+    h1:"🌍 直播地球",
+    docTitle:"直播地球 · 世界风景直播",
+    tagline:"点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 开放直连流 + 官方快照，开放的都收",
+    spinPause:"⏸ 暂停自转", spinRun:"▶ 继续自转", random:"🎲 随机飞一个",
+    srcLabel:"来源", all:"全部", hlsShort:"直连流", snapShort:"快照", apiShort:"开放 API",
+    countryLabel:"国家 / 地区", anyCountry:"全部国家", catLabel:"类型", anyCat:"全部类型",
+    count:"全部机位", unit:"个",
+    hint:"拖动转地球 · 滚轮缩放 · 点光点看直播",
+    pick:"选一个点，这里就会播那里的直播",
+    noSrc:"这个点暂时没有稳定的直播源",
+    noHls:"这个浏览器不支持直连流播放，点下面按钮去源站看",
+    openYt:"▶ 在 YouTube 打开", openPage:"▶ 在源站打开", expand:"⛶ 放大", shrink:"⛶ 还原", next:"⏭ 随机下一个",
+    live:"LIVE", badgeHls:"📡 直连直播", badgeSnap:"📷 官方快照",
+    localTime:"当地时间",
+    nbTitle:"这个频道关闭了第三方嵌入",
+    nbBody:"直接在网页里播放会触发 YouTube 的 Error 153 / 150。点下面的按钮可以在新窗口看完整直播，画质和弹幕都正常。",
+    nbBtn:"▶ 在 YouTube 观看",
+    empty:"没有符合条件的机位，换个筛选试试",
+    issLabel:"🛰️ 国际空间站", issSub:"轨道直播 · 不在地球表面",
+    srcHls:"直连", srcSnap:"快照",
+    fileWarn:'⚠️ 当前是用本地文件（file://）打开的，浏览器不会发送 Referer，YouTube 播放器会一律报 <b>Error 153</b>。部署到 GitHub Pages 等 https 页面，或在本机起一个 http 服务（如 <code>python -m http.server</code>）再打开就正常。'
+  },
+  en:{
+    h1:"🌍 Live Earth",
+    docTitle:"Live Earth · World Live Cams",
+    tagline:"Click a dot on the globe and watch that place right now · YouTube live, open HLS streams and official snapshots — everything that is open",
+    spinPause:"⏸ Stop rotation", spinRun:"▶ Resume rotation", random:"🎲 Surprise me",
+    srcLabel:"SOURCE", all:"All", hlsShort:"HLS", snapShort:"Snapshot", apiShort:"Open API",
+    countryLabel:"COUNTRY / REGION", anyCountry:"All countries", catLabel:"CATEGORY", anyCat:"All categories",
+    count:"All cameras", unit:"",
+    hint:"Drag to spin · scroll to zoom · click a dot to watch",
+    pick:"Pick a dot and this is where its live feed will play",
+    noSrc:"No stable live source for this camera right now",
+    noHls:"This browser cannot play HLS directly — use the button below to open the source",
+    openYt:"▶ Open on YouTube", openPage:"▶ Open at source", expand:"⛶ Expand", shrink:"⛶ Shrink", next:"⏭ Next random",
+    live:"LIVE", badgeHls:"📡 Direct stream", badgeSnap:"📷 Official snapshot",
+    localTime:"Local time",
+    nbTitle:"This channel blocks third-party embedding",
+    nbBody:"Playing it inside a page triggers YouTube error 153 / 150. Use the button below to watch the full stream in a new window.",
+    nbBtn:"▶ Watch on YouTube",
+    empty:"No cameras match these filters — try loosening them",
+    issLabel:"🛰️ International Space Station", issSub:"Orbital feed · not on the surface",
+    srcHls:"HLS", srcSnap:"snap",
+    fileWarn:'⚠️ Opened as a local file (<code>file://</code>), so the browser sends no Referer and every YouTube embed throws <b>Error 153</b>. Serve it over http (e.g. <code>python -m http.server</code>) or deploy to GitHub Pages and it works normally.'
+  }
+};
+let LANG = (function(){
+  try{
+    const q=new URLSearchParams(location.search).get("lang");
+    if(q) return q.toLowerCase()==="en" ? "en" : "zh";
+    return localStorage.getItem("le_lang")==="en" ? "en" : "zh";
+  }catch(e){ return "zh"; }
+})();
+function L(k){ const d=UI[LANG]; return (d && d[k]!==undefined) ? d[k] : (UI.zh[k]!==undefined?UI.zh[k]:k); }
+const isZh=()=>LANG==="zh";
+const camName=c=>isZh()?c.name:(c.en||c.name);
+const camPlace=c=>isZh()?c.place:(c.pEn||c.place);
+const camDesc=c=>isZh()?c.desc:(c.dEn||c.desc);
+const catName=c=>isZh()?c.cat:(CAT_EN[c.cat]||c.cat);
+function subText(cam){ const lt=localTime(cam.tz); return isZh() ? (cam.place+" · "+cam.en+" · "+L("localTime")+" "+lt) : ((cam.pEn||cam.place)+" · "+L("localTime")+" "+lt); }
+
+/* 来源归类：yt / hls / img / sgapi */
+function srcOf(c){ if(c.yt||c.channel) return "yt"; return c.type||"other"; }
+CAMS.forEach(c=>{
+  c.__cc = c.place.split(" · ")[0].split(" / ");
+  c.__ce = (c.pEn||c.en||"").split(" · ")[0].split(" / ");
+});
+const COUNTRY_LIST=(function(){
+  const m=new Map();
+  CAMS.forEach(c=>c.__cc.forEach((z,i)=>{
+    if(!m.has(z)) m.set(z,{zh:z,en:c.__ce[i]||z,n:0});
+    m.get(z).n++;
+  }));
+  return [...m.values()].sort((a,b)=> b.n-a.n || a.zh.localeCompare(b.zh,"zh"));
+})();
+const countryName=o=>isZh()?o.zh:o.en;
+
+const F={src:"all", ctry:"all", cat:"all"};
+function matchCam(c){
+  if(F.src!=="all" && srcOf(c)!==F.src) return false;
+  if(F.cat!=="all" && c.cat!==F.cat) return false;
+  if(F.ctry!=="all" && c.__cc.indexOf(F.ctry)<0) return false;
+  return true;
+}
+function filteredCams(){ return CAMS.filter(matchCam); }
+
 const map = new maplibregl.Map({
   container:"map",
   style:{version:8,
@@ -262,7 +367,7 @@ map.on("load",()=>{
   map.addLayer({id:"cam-sel",type:"circle",source:"cams",filter:["==",["get","name"],"__none__"],paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,13,4,20],"circle-color":"rgba(0,0,0,0)","circle-stroke-color":"#ffffff","circle-stroke-width":2.5}});
   map.addLayer({id:"cam-core",type:"circle",source:"cams",paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,5.5,4,8.5],"circle-color":["get","color"],"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":0.95}});
   const tip=document.getElementById("tip");
-  map.on("mousemove","cam-core",e=>{ map.getCanvas().style.cursor="pointer"; const f=e.features[0]; tip.style.display="block"; tip.style.left=(e.point.x+14)+"px"; tip.style.top=(e.point.y+10)+"px"; tip.textContent=f.properties.name+" · "+f.properties.place; });
+  map.on("mousemove","cam-core",e=>{ map.getCanvas().style.cursor="pointer"; const f=e.features[0]; const cam=CAMS.find(c=>c.name===f.properties.name)||{}; tip.style.display="block"; tip.style.left=(e.point.x+14)+"px"; tip.style.top=(e.point.y+10)+"px"; tip.textContent=camName(cam)+" · "+camPlace(cam); });
   map.on("mouseleave","cam-core",()=>{ map.getCanvas().style.cursor=""; tip.style.display="none"; });
   const pick=e=>{ const f=(e.features||[])[0]; if(!f) return; const cam=CAMS.find(c=>c.name===f.properties.name); if(cam){ lastTouch=Date.now(); openCam(cam,false); } };
   map.on("click","cam-core",pick); map.on("click","cam-halo",pick);
@@ -281,11 +386,13 @@ map.on("load",()=>{
   function centralAngle(c,lon,lat){ const f1=c.lat*Math.PI/180, f2=lat*Math.PI/180, dl=(lon-c.lng)*Math.PI/180;
     const x=Math.sin(f1)*Math.sin(f2)+Math.cos(f1)*Math.cos(f2)*Math.cos(dl); return Math.acos(Math.max(-1,Math.min(1,x)))*180/Math.PI; }
   function applyCull(){ const h=measureHorizon(); window.__horizon=h; const c=map.getCenter(); const lim=h-0.4;
-    const vis=ALLFEATS.filter(f=>centralAngle(c,f.geometry.coordinates[0],f.geometry.coordinates[1])<=lim);
+    const vis=ALLFEATS.filter(f=>centralAngle(c,f.geometry.coordinates[0],f.geometry.coordinates[1])<=lim
+      && (!window.__allow || window.__allow.has(f.properties.name)));
     window.__fedNames=vis.map(f=>f.properties.name);
     const src=map.getSource("cams"); if(src) src.setData({type:"FeatureCollection",features:vis});
     if(window.__pinCam && window.__pinEl){ window.__pinEl.style.display = centralAngle(c,window.__pinCam.lon,window.__pinCam.lat)<=lim ? "" : "none"; } }
   map.on("move",()=>{ if(!cullQueued){ cullQueued=true; requestAnimationFrame(()=>{ cullQueued=false; applyCull(); }); } });
+  window.__applyCull=applyCull;
   applyCull();
 });
 
@@ -293,7 +400,7 @@ map.on("load",()=>{
 let spinning=true, lastTouch=Date.now();
 function spin(){ if(spinning && Date.now()-lastTouch>2500 && !player.classList.contains("open")){ const c=map.getCenter(); c.lng+=0.045; map.jumpTo({center:c}); } requestAnimationFrame(spin); }
 ["mousedown","touchstart","wheel"].forEach(e=>map.on(e,()=>{ lastTouch=Date.now(); }));
-document.getElementById("spinBtn").onclick=e=>{ spinning=!spinning; e.target.textContent = spinning?"⏸ 暂停自转":"▶ 继续自转"; };
+document.getElementById("spinBtn").onclick=e=>{ spinning=!spinning; e.target.textContent = spinning?L("spinPause"):L("spinRun"); };
 
 const player=document.getElementById("player"), frame=document.getElementById("frame"), vempty=document.getElementById("vempty");
 const vid=document.getElementById("vid"), snap=document.getElementById("snap");
@@ -302,9 +409,9 @@ let current=null, clockTimer=null, hls=null, snapTimer=null;
 /* 本地 file:// 打开时浏览器没有 origin 可发，YouTube 播放器必然报 Error 153，这里明确提示，避免误判成站点坏了 */
 if(location.protocol==="file:"){
   const bar=document.createElement("div");
+  bar.id="fileWarn";
   bar.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:linear-gradient(90deg,#b3341a,#d4631f);color:#fff;font:13px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;padding:10px 44px 10px 16px;text-align:center";
-  bar.innerHTML="⚠️ 当前是用本地文件（file://）打开的，浏览器不会发送 Referer，YouTube 播放器会一律报 <b>Error 153</b>。"
-    +"部署到 GitHub Pages 等 https 页面，或在本机起一个 http 服务（如 <code>python -m http.server</code>）再打开就正常。";
+  bar.innerHTML='<span id="fileWarnTxt"></span>';
   const x=document.createElement("button");
   x.textContent="✕";
   x.style.cssText="position:absolute;right:12px;top:8px;background:transparent;border:0;color:#fff;font-size:16px;cursor:pointer;opacity:.8";
@@ -339,33 +446,54 @@ function markSelected(cam){
     window.__pinCam=cam; window.__pinEl=el;
   } else { window.__pinCam=null; window.__pinEl=null; }
 }
+/* 播放面板的文案（语言切换时也走这里重刷，不重载媒体） */
+function renderBadge(t){
+  return t==="hls" ? '<span class="livebadge hls">'+L("badgeHls")+'</span>'
+    : (t==="img"||t==="sgapi") ? '<span class="livebadge img">'+L("badgeSnap")+'</span>'
+    : '<span class="livebadge">'+L("live")+'</span>';
+}
+function renderPlayerTexts(){
+  const cam=current; if(!cam) return;
+  const t=camType(cam);
+  document.getElementById("pTitle").innerHTML = renderBadge(t)+camName(cam);
+  document.getElementById("pDesc").textContent = camDesc(cam)||"";
+  document.getElementById("pSub").textContent = subText(cam);
+  document.getElementById("expandBtn").textContent = player.classList.contains("max")?L("shrink"):L("expand");
+  document.getElementById("nextBtn").textContent = L("next");
+  document.getElementById("close").title = isZh()?"关闭":"Close";
+  const srcBtn=document.getElementById("openSrc");
+  if(t==="yt"){
+    srcBtn.style.display=""; srcBtn.textContent=L("openYt");
+    srcBtn.onclick=()=>window.open(cam.yt?("https://www.youtube.com/watch?v="+cam.yt):("https://www.youtube.com/results?search_query="+encodeURIComponent(cam.en+" live cam")),"_blank");
+  } else if(cam.page){
+    srcBtn.style.display=""; srcBtn.textContent=L("openPage"); srcBtn.onclick=()=>window.open(cam.page,"_blank");
+  } else { srcBtn.style.display="none"; }
+  if(cam.noembed) showNoEmbed(cam);
+}
+function showNoEmbed(cam){
+  vempty.style.display="flex";
+  vempty.innerHTML='<div style="max-width:360px;line-height:1.75"><div style="font-size:32px;margin-bottom:10px">🚫</div>'
+    +'<div style="color:#d7e6ff;font-size:14px;font-weight:600;margin-bottom:8px">'+L("nbTitle")+'</div>'
+    +'<div style="font-size:12.5px;color:#8fa8cc;margin-bottom:16px">'+L("nbBody")+'</div>'
+    +'<button id="noembedGo" style="cursor:pointer;border:0;border-radius:999px;padding:10px 22px;background:#e5484d;color:#fff;font-size:13px;font-weight:600">'+L("nbBtn")+'</button></div>';
+  document.getElementById("noembedGo").onclick=()=>window.open("https://www.youtube.com/watch?v="+cam.yt,"_blank");
+}
 function openCam(cam, fly=true){
   current=cam; stopMedia(); markSelected(cam);
   document.querySelectorAll("#list .item").forEach(el=>el.classList.toggle("active", el.dataset.name===cam.name));
   const t=camType(cam);
-  const badge = t==="hls" ? '<span class="livebadge hls">📡 直连直播</span>' : (t==="img"||t==="sgapi") ? '<span class="livebadge img">📷 官方快照</span>' : '<span class="livebadge">LIVE</span>';
-  document.getElementById("pTitle").innerHTML = badge+cam.name;
-  document.getElementById("pDesc").textContent = cam.desc||"";
-  const tick=()=>{ document.getElementById("pSub").textContent = cam.place+" · "+cam.en+" · 当地时间 "+localTime(cam.tz); };
-  tick(); clearInterval(clockTimer); clockTimer=setInterval(tick,1000);
   vempty.style.display="none";
   if(cam.noembed){
     frame.style.display="none";
-    vempty.style.display="flex";
-    vempty.innerHTML='<div style="max-width:360px;line-height:1.75"><div style="font-size:32px;margin-bottom:10px">🚫</div>'
-      +'<div style="color:#d7e6ff;font-size:14px;font-weight:600;margin-bottom:8px">这个频道关闭了第三方嵌入</div>'
-      +'<div style="font-size:12.5px;color:#8fa8cc;margin-bottom:16px">直接在网页里播放会触发 YouTube 的 Error 153 / 150。点下面的按钮可以在新窗口看完整直播，画质和弹幕都正常。</div>'
-      +'<button id="noembedGo" style="cursor:pointer;border:0;border-radius:999px;padding:10px 22px;background:#e5484d;color:#fff;font-size:13px;font-weight:600">▶ 在 YouTube 观看</button></div>';
-    document.getElementById("noembedGo").onclick=()=>window.open("https://www.youtube.com/watch?v="+cam.yt,"_blank");
   } else if(t==="yt"){
     const url=embedUrl(cam);
     if(url){ frame.style.display="block"; frame.src=url; }
-    else { vempty.style.display="flex"; vempty.textContent="这个点暂时没有稳定的直播源"; }
+    else { vempty.style.display="flex"; vempty.textContent=L("noSrc"); }
   } else if(t==="hls"){
     vid.style.display="block";
     if(window.Hls && Hls.isSupported()){ hls=new Hls({liveSyncDurationCount:3}); hls.loadSource(cam.src); hls.attachMedia(vid); hls.on(Hls.Events.MANIFEST_PARSED,()=>{ vid.play().catch(()=>{}); }); }
     else if(vid.canPlayType("application/vnd.apple.mpegurl")){ vid.src=cam.src; vid.play().catch(()=>{}); }
-    else { vempty.style.display="flex"; vempty.textContent="这个浏览器不支持直连流播放，点下面按钮去源站看"; }
+    else { vempty.style.display="flex"; vempty.textContent=L("noHls"); }
   } else if(t==="img"||t==="sgapi"){
     snap.style.display="block";
     const load=()=>{
@@ -375,36 +503,81 @@ function openCam(cam, fly=true){
     };
     load(); snapTimer=setInterval(load,(cam.refresh||60)*1000);
   }
-  const srcBtn=document.getElementById("openSrc");
-  if(t==="yt"){ srcBtn.style.display=""; srcBtn.textContent="▶ 在 YouTube 打开"; srcBtn.onclick=()=>window.open(cam.yt?("https://www.youtube.com/watch?v="+cam.yt):("https://www.youtube.com/results?search_query="+encodeURIComponent(cam.en+" live cam")),"_blank"); }
-  else if(cam.page){ srcBtn.style.display=""; srcBtn.textContent="▶ 在源站打开"; srcBtn.onclick=()=>window.open(cam.page,"_blank"); }
-  else { srcBtn.style.display="none"; }
+  renderPlayerTexts();
+  const tick=()=>{ if(current) document.getElementById("pSub").textContent = subText(current); };
+  clearInterval(clockTimer); clockTimer=setInterval(tick,1000);
   player.classList.add("open");
   if(fly && !cam.iss) map.flyTo({center:[cam.lon,cam.lat], zoom:Math.max(map.getZoom(),3.4), speed:0.9, curve:1.4, essential:true});
 }
-document.getElementById("close").onclick=()=>{ player.classList.remove("open"); player.classList.remove("max"); document.getElementById("expandBtn").textContent="⛶ 放大"; stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
-document.getElementById("expandBtn").onclick=e=>{ const m=player.classList.toggle("max"); e.target.textContent = m ? "⛶ 还原" : "⛶ 放大"; };
+document.getElementById("close").onclick=()=>{ player.classList.remove("open"); player.classList.remove("max"); document.getElementById("expandBtn").textContent=L("expand"); stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
+document.getElementById("expandBtn").onclick=e=>{ const m=player.classList.toggle("max"); e.target.textContent = m ? L("shrink") : L("expand"); };
 document.getElementById("nextBtn").onclick=()=>randomCam();
 document.getElementById("randomBtn").onclick=()=>randomCam();
-function randomCam(){ const pool=CAMS.filter(c=>!c.disabled); openCam(pool[Math.floor(Math.random()*pool.length)]); }
+function randomCam(){ const pool=filteredCams().filter(c=>!c.disabled); if(!pool.length) return; openCam(pool[Math.floor(Math.random()*pool.length)]); }
 
-/* 左侧列表（地图上的点在 map load 里以 GL 图层画出，贴在球面上） */
+/* ============ 左栏：来源 / 国家 / 类型 筛选 + 列表 ============ */
 const list=document.getElementById("list");
-list.innerHTML='<div class="hd">全部机位 · '+CAMS.filter(c=>!c.disabled).length+' 个</div>';
-CAMS.forEach(cam=>{
-  if(cam.iss){
+function renderList(){
+  const arr=filteredCams();
+  window.__allow=new Set(arr.map(c=>c.name));
+  if(window.__applyCull) window.__applyCull();
+
+  const srcOpts=[["all",L("all")],["yt","YouTube"],["hls",L("hlsShort")],["img",L("snapShort")],["sgapi",L("apiShort")]];
+  const ctryOpts=['<option value="all">'+L("anyCountry")+' · '+CAMS.length+'</option>']
+    .concat(COUNTRY_LIST.map(o=>'<option value="'+o.zh+'"'+(F.ctry===o.zh?" selected":"")+'>'+countryName(o)+' ('+o.n+')</option>'));
+  const catOpts=['<option value="all">'+L("anyCat")+'</option>']
+    .concat(Object.keys(CATS).map(k=>'<option value="'+k+'"'+(F.cat===k?" selected":"")+'>'+catName({cat:k})+' ('+CAMS.filter(c=>c.cat===k).length+')</option>'));
+
+  list.innerHTML =
+    '<div id="filters">'
+    + '<div class="flabel">'+L("srcLabel")+'</div>'
+    + '<div class="frow">'+srcOpts.map(o=>'<button class="chip'+(F.src===o[0]?" on":"")+'" data-src="'+o[0]+'">'+o[1]+'</button>').join("")+'</div>'
+    + '<div class="flabel">'+L("countryLabel")+'</div>'
+    + '<div class="frow"><select data-sel="ctry">'+ctryOpts.join("")+'</select></div>'
+    + '<div class="flabel">'+L("catLabel")+'</div>'
+    + '<div class="frow"><select data-sel="cat">'+catOpts.join("")+'</select></div>'
+    + '</div>'
+    + '<div class="hd">'+L("count")+' · '+arr.length+(isZh()?" 个":"")+'</div>';
+
+  if(!arr.length){ const e=document.createElement("div"); e.className="empty"; e.textContent=L("empty"); list.appendChild(e); }
+
+  list.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{ F.src=b.dataset.src; renderList(); });
+  list.querySelector('[data-sel="ctry"]').onchange=e=>{ F.ctry=e.target.value; renderList(); };
+  list.querySelector('[data-sel="cat"]').onchange=e=>{ F.cat=e.target.value; renderList(); };
+
+  arr.forEach(cam=>{
     const b=document.createElement("button"); b.className="item"; b.dataset.name=cam.name;
-    b.innerHTML="<b>🛰️ 国际空间站</b><span>轨道直播 · 不在地球表面</span>";
-    b.onclick=()=>openCam(cam,false); list.appendChild(b); return;
-  }
-  if(!cam.disabled){
-    const b=document.createElement("button"); b.className="item"; b.dataset.name=cam.name;
-    const tt=camType(cam);
-    const srcLabel = tt==="hls" ? ' · <span class="src">📡直连</span>' : (tt==="img"||tt==="sgapi") ? ' · <span class="src">📷快照</span>' : ' · YouTube';
-    b.innerHTML="<b>"+cam.icon+" "+cam.name+"</b><span>"+cam.place+" · "+cam.cat+srcLabel+"</span>";
-    b.onclick=()=>openCam(cam); list.appendChild(b);
-  }
-});
+    if(current && current.name===cam.name) b.classList.add("active");
+    if(cam.iss){
+      b.innerHTML="<b>"+L("issLabel")+"</b><span>"+L("issSub")+"</span>";
+      b.onclick=()=>openCam(cam,false);
+    } else {
+      const t=srcOf(cam);
+      const tag = t==="yt" ? " · YouTube" : (t==="hls" ? ' · <span class="src">'+L("srcHls")+'</span>' : ' · <span class="src">'+L("srcSnap")+'</span>');
+      b.innerHTML="<b>"+cam.icon+" "+camName(cam)+"</b><span>"+camPlace(cam)+" · "+catName(cam)+tag+"</span>";
+      b.onclick=()=>openCam(cam);
+    }
+    list.appendChild(b);
+  });
+}
+
+function setLang(l){
+  LANG=l;
+  try{ localStorage.setItem("le_lang",l); }catch(e){}
+  document.documentElement.lang = isZh()?"zh-CN":"en";
+  document.title=L("docTitle");
+  document.getElementById("brandH1").textContent=L("h1");
+  document.getElementById("brandP").textContent=L("tagline");
+  document.getElementById("spinBtn").textContent=spinning?L("spinPause"):L("spinRun");
+  document.getElementById("randomBtn").textContent=L("random");
+  document.getElementById("langBtn").textContent=isZh()?"EN":"中文";
+  document.getElementById("hint").textContent=L("hint");
+  const fw=document.getElementById("fileWarnTxt"); if(fw) fw.innerHTML=L("fileWarn");
+  if(current) renderPlayerTexts(); else vempty.textContent=L("pick");
+  renderList();
+}
+document.getElementById("langBtn").onclick=()=>setLang(isZh()?"en":"zh");
+setLang(LANG);
 requestAnimationFrame(spin);
 </script>
 </body>

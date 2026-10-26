@@ -15,6 +15,8 @@ Everything lives in one `index.html`. No build step, no `npm install`, no backen
 - **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
 - **137 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
 - **Three source types, auto-detected** — YouTube embeds, direct HLS streams, and official snapshot images
+- **Filters in the sidebar** — narrow by source (YouTube / HLS / snapshot / open API), by country, and by category; the pins on the globe are filtered along with the list
+- **Bilingual, 中文 / English** — one toggle in the top-right corner, remembered across visits; every camera carries both languages
 - **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
 By category: cities 57 · coast & water 28 · nature 27 · wildlife 18 · night sky 4 · space 3
@@ -32,8 +34,10 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 | Field | Required | Description |
 | --- | --- | --- |
 | `name` | ✅ | Unique name. Drives the pin, the sidebar list, and selection highlighting — **must not repeat** |
-| `en` | ✅ | English name, shown as the subtitle |
-| `place` | ✅ | `Country · Region · detail`, e.g. `Nepal · Solukhumbu · 3,880 m` |
+| `en` | ✅ | English name, shown as the subtitle (and as the title when the UI is in English) |
+| `place` | ✅ | `Country · Region · detail`, e.g. `Nepal · Solukhumbu · 3,880 m`. **The first segment is the country filter key** |
+| `pEn` | ✅ | English `place`, same ` · ` structure. The first segment becomes the English country label |
+| `dEn` | ✅ | English description, shown when the UI is in English |
 | `lat` / `lon` | ✅ | Decimal degrees. For the ISS use `0, 0` plus `iss:true` |
 | `tz` | ✅ | IANA timezone, e.g. `Asia/Kuala_Lumpur`, used for local time |
 | `cat` | ✅ | `城市` / `水乡` / `自然` / `野生动物` / `星空` / `太空` |
@@ -54,9 +58,11 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 YouTube live stream:
 
 ```js
-{name:"富士山 · 河口湖", en:"Mount Fuji from Lake Kawaguchi", place:"日本 · 山梨 · 河口湖",
+{name:"富士山 · 河口湖", en:"Mount Fuji from Lake Kawaguchi",
+ pEn:"Japan · Yamanashi · Lake Kawaguchi", place:"日本 · 山梨 · 河口湖",
  lat:35.517, lon:138.753, yt:"bdUbACCWmoY", tz:"Asia/Tokyo", cat:"自然", icon:"🗻",
- desc:"从大石公园看富士山，逆富士就出自这一带。晴天率最高的富士山机位之一，清晨湖面最平。"}
+ desc:"从大石公园看富士山，逆富士就出自这一带。晴天率最高的富士山机位之一，清晨湖面最平。",
+ dEn:"Mount Fuji from Oishi Park, home of the famous reflection. Clearest skies in the morning."}
 ```
 
 Direct HLS stream (your own feed, or a broadcaster's):
@@ -91,6 +97,14 @@ Embed-blocked channel (still listed, never loaded in an iframe):
 All four examples above are real entries currently in the site.
 
 ---
+
+## Language
+
+The UI ships in Chinese and English. The toggle sits in the top-right corner, and the choice is remembered in `localStorage`.
+
+- **Share a language directly:** `?lang=en` or `?lang=zh` on the URL overrides the stored preference, e.g. https://beef-code.github.io/live-earth/?lang=en
+- **Adding a camera:** fill in `pEn` and `dEn` as well as `place` and `desc`, otherwise it falls back to Chinese in English mode
+- **Category names** stay Chinese in the data (`城市`, `水乡`, …) because they are also the filter keys; `CAT_EN` maps them for display
 
 ## Two pitfalls worth knowing
 
