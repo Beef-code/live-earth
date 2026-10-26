@@ -13,15 +13,15 @@ A single-file globe of live cameras. Spin the planet, click a dot, watch what is
 Everything lives in one `index.html`. No build step, no `npm install`, no backend.
 
 - **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
-- **137 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
-- **Three source types, auto-detected** — YouTube embeds, direct HLS streams, and official snapshot images
-- **Filters in the sidebar** — narrow by source (YouTube / HLS / snapshot / open API), by country, and by category; the pins on the globe are filtered along with the list
+- **156 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
+- **Four source types, auto-detected** — YouTube embeds, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
+- **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, and by category; the pins on the globe are filtered along with the list
 - **Bilingual, 中文 / English** — one toggle in the top-right corner, remembered across visits; every camera carries both languages
 - **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
-By category: cities 57 · coast & water 28 · nature 27 · wildlife 18 · night sky 4 · space 3
+By category: cities 61 · coast & water 31 · nature 32 · wildlife 20 · night sky 8 · space 4
 
-By source: YouTube 121 · snapshot 12 · HLS 3 · open API 1
+By source: YouTube 121 · Bilibili slow-live 24 · snapshot 7 · HLS 3 · open API 1
 
 ---
 
@@ -186,7 +186,7 @@ Only trust it when it prints `ALL CHECKS PASSED`.
 
 ## Known limitations
 
-- **Chinese platforms all block embedding**, with one exception: Bilibili's official third-party player `/blanc/{room}` sends **no `X-Frame-Options` and no CSP**, so it can be embedded. The catch is referrer: Bilibili's CDN and stream API both answer **403 to a foreign Referer and 200 to no Referer at all** — which is also why plain snapshots used to break. Two consequences, both handled in the code: the `<img id="snap">` carries `referrerpolicy="no-referrer"`, and the optional Bilibili player iframe is loaded with the same policy, switched per-load because YouTube needs the opposite. Everything else about Chinese platforms still holds: Bilibili sends `X-Frame-Options: SAMEORIGIN`; CCTV's Yangshipin uses `CSP: frame-ancestors 'self'`; Douyin, Kuaishou, Huya and Douyu behave the same. Bilibili's API returns 403 with no CORS header when it sees a foreign `Origin`, so a static site cannot even fetch a stream URL. Domestic cameras therefore go through a **live keyframe snapshot** with an "Open at source" button to the actual room
+- **Chinese platforms all block embedding.** Bilibili's `/blanc/{room}` player looked like the exception — it sends **no `X-Frame-Options` and no CSP**, and the stream API answers 200 when no Referer is sent — but the player stays black in practice (verified in headless Edge and in a real browser), so the Bilibili play-through was **removed**. What actually works is the keyframe: Bilibili's CDN answers **403 to a foreign Referer and 200 to no Referer at all**, so the `<img id="snap">` must carry `referrerpolicy="no-referrer"` — that one attribute is the whole trick. Everything else about Chinese platforms still holds: Bilibili sends `X-Frame-Options: SAMEORIGIN`; CCTV's Yangshipin uses `CSP: frame-ancestors 'self'`; Douyin, Kuaishou, Huya and Douyu behave the same. Bilibili's API returns 403 with no CORS header when it sees a foreign `Origin`, so a static site cannot even fetch a stream URL. Domestic cameras therefore go through a **live keyframe snapshot** with an "Open at source" button to the actual room
 - **SkylineWebcams and earthTV block embedding too** (`SAMEORIGIN`). Do not count on them to fill city slots
 - **YouTube live IDs expire.** Restart a broadcast and the ID changes; cameras need re-verification periodically
 - **No embeddable Kuala Lumpur skyline exists.** Everything searchable is a traffic camera or a clock; the KL pin uses `noembed` and links out

@@ -13,15 +13,15 @@
 `index.html` 一个文件装下全部东西，没有构建、没有依赖安装、没有后端：
 
 - **3D 地球**：MapLibre GL JS（CDN 引入），机位点以 GL 图层贴在球面上
-- **137 个机位**：城市天际线、港口渔村、火山冰川、野生动物保护区、天文台、国际空间站
-- **点开就播**：YouTube 嵌入 / HLS 直连 / 官方快照三种源自动切换
-- **左栏筛选**：按来源（YouTube / 直连流 / 快照 / 开放 API）、国家、类型三层筛，地图上的点跟着一起过滤
+- **156 个机位**：城市天际线、港口渔村、火山冰川、野生动物保护区、天文台、国际空间站
+- **点开就播**：YouTube 嵌入 / B 站实时关键帧 / HLS 直连 / 官方快照四种源自动切换
+- **左栏筛选**：按来源（YouTube / B 站慢直播 / 直连流 / 快照 / 开放 API）、国家、类型三层筛，地图上的点跟着一起过滤
 - **中英双语**：右上角一键切换，选择记在 localStorage；每个机位都带两套文案
 - **每个点多带当地时间**：按 IANA 时区每秒刷新，不看表也知道那边几点
 
-机位分布：城市 57 · 水乡 28 · 自然 27 · 野生动物 18 · 星空 4 · 太空 3
+机位分布：城市 61 · 水乡 31 · 自然 32 · 野生动物 20 · 星空 8 · 太空 4
 
-源类型分布：YouTube 121 · 官方快照 12 · HLS 直连 3 · 开放 API 1
+源类型分布：YouTube 121 · B 站慢直播 24 · 官方快照 7 · HLS 直连 3 · 开放 API 1
 
 ---
 
@@ -182,7 +182,7 @@ node validate.js index.html
 
 ## 已知限制
 
-- **国内平台基本都禁嵌，但 B 站官方第三方播放器 `/blanc/{room}` 是例外**：它没有 `X-Frame-Options` 也没有 CSP，可以直接 iframe。真正的卡点是 **Referer**——B 站 CDN 和取流 API 对「外部 Referer」一律 403、对「完全不带 Referer」返回 200（快照图之前裂掉就是这个原因）。代码里两处都处理了：`<img id="snap">` 带 `referrerpolicy="no-referrer"`；B 站播放器 iframe 每次加载时切成 `no-referrer`（YouTube 需要相反策略，所以是逐次设置的）。其余限制照旧：央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同样禁嵌，B 站 API 见外部 Origin 直接 403 且无 CORS 头
+- **国内平台基本都禁嵌。B 站 `/blanc/{room}` 播放器看着像例外**——它确实没有 `X-Frame-Options` 也没有 CSP，取流 API 不带 Referer 也返回 200——但实测播放器一直是黑屏（无头 Edge 和真实浏览器都试过），所以 B 站试播按钮已经**移除**。真正能用的只有关键帧：B 站 CDN 对「外部 Referer」一律 403、对「完全不带 Referer」返回 200，所以 `<img id="snap">` 必须带 `referrerpolicy="no-referrer"`，就差这一个属性。其余限制照旧：央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同样禁嵌，B 站 API 见外部 Origin 直接 403 且无 CORS 头
 - **SkylineWebcams / earthTV 也禁嵌**（`SAMEORIGIN`），别指望用它们补城市机位
 - **YouTube 直播 ID 会失效**：主播重开一场直播就换 ID，需要定期重验
 - **吉隆坡没有可嵌的天际线直播源**，全网搜到的都是监控头和时间钟，只能用 `noembed` 直达

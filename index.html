@@ -96,7 +96,6 @@
     <div class="sub" id="pSub"></div>
     <div class="desc" id="pDesc"></div>
     <div class="row">
-      <button id="biliBtn" style="display:none">▶ 试播 B 站播放器</button>
       <button id="openSrc">▶ 在源站打开</button>
       <button id="expandBtn">⛶ 放大</button>
       <button id="nextBtn">⏭ 随机下一个</button>
@@ -255,7 +254,26 @@ const CAMS = [
   {name:"玉龙雪山 · 大研古城", en:"Yulong Snow Mountain, Lijiang", pEn:"China · Yunnan · Lijiang", dEn:"Lijiang slow-live: Jade Dragon Snow Mountain above Dayan old town. Dawn sometimes brings the golden summit.", place:"中国 · 云南 · 丽江", lat:26.872, lon:100.229, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057000030487299bnzpta.jpg", page:"https://live.bilibili.com/30487299", bili:30487299,refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"丽江实时风景慢直播机位，玉龙雪山和大研古城同框。清晨有机会看到日照金山。B 站房间的实时关键帧快照。"},
   {name:"南迦巴瓦日照金山", en:"Namcha Barwa, Nyingchi", pEn:"China · Tibet · Mainling", dEn:"Namcha Barwa slow-live from the Mainling tourism association. The golden sunrise lasts only minutes.", place:"中国 · 西藏 · 米林", lat:29.632, lon:95.061, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260057001994821649hbwy50.jpg", page:"https://live.bilibili.com/1994821649", bili:1994821649,refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"米林市旅游协会的南迦巴瓦慢直播。中国最美雪山之一，日照金山每天只出现清晨几分钟，看到就是赚到。"},
   {name:"青岛海边", en:"Qingdao Seafront", pEn:"China · Shandong · Qingdao", dEn:"Seaside slow-live facing the sea — red roofs, green trees, blue water. Qingdao's signature combination.", place:"中国 · 山东 · 青岛", lat:36.067, lon:120.343, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022570982xw7b2c.jpg", page:"https://live.bilibili.com/22570982", bili:22570982,refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"半岛都市报的海边慢直播机位，面朝大海。白天看海晚上看灯，红瓦绿树碧海蓝天是青岛的招牌。"},
-  {name:"高崖子天文台全天相机", en:"Gaoyazi Observatory All-Sky", pEn:"China · Qinghai · Delingha", dEn:"All-sky camera at a shared observatory: clouds by day, stars by night. Very transparent plateau sky.", place:"中国 · 青海 · 德令哈", lat:37.370, lon:97.360, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022325806o18uos.jpg", page:"https://live.bilibili.com/22325806", bili:22325806,refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🔭", desc:"共享天文台的全天相机，白天拍云、晚上拍星。西北高原夜空透明度极高，银河季值得挂着看。"},];
+  {name:"高崖子天文台全天相机", en:"Gaoyazi Observatory All-Sky", pEn:"China · Qinghai · Delingha", dEn:"All-sky camera at a shared observatory: clouds by day, stars by night. Very transparent plateau sky.", place:"中国 · 青海 · 德令哈", lat:37.370, lon:97.360, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10260056000022325806o18uos.jpg", page:"https://live.bilibili.com/22325806", bili:22325806,refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🔭", desc:"共享天文台的全天相机，白天拍云、晚上拍星。西北高原夜空透明度极高，银河季值得挂着看。"},  {name:"济南 · 趵突泉", en:"Baotu Spring, Jinan", pEn:"China · Shandong · Jinan", place:"中国 · 山东 · 济南", lat:36.661, lon:117.012, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000011235702i1o1vd.jpg", bili:11235702, page:"https://live.bilibili.com/11235702", refresh:30, tz:"Asia/Shanghai", cat:"城市", icon:"💧", desc:"济南 24 小时慢直播，看趵突泉那三股水一年到头不停往上冒。冬天水温比气温高，水面会起一层白汽。", dEn:"24/7 from Jinan: the three springs of Baotu bubbling up year-round. In winter the warmer water steams in the cold air."},
+  {name:"北京 · 朝阳大悦城街景", en:"Chaoyang Joy City Street, Beijing", pEn:"China · Beijing", place:"中国 · 北京 · 朝阳", lat:39.924, lon:116.517, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261245000003291055cu20ap.jpg", bili:3291055, page:"https://live.bilibili.com/3291055", refresh:30, tz:"Asia/Shanghai", cat:"城市", icon:"🏙️", desc:"窗外固定机位，北京朝阳青年路一带的即时街景：车流、外卖骑手和过街的人群。", dEn:"A fixed window view over Qingnian Road in Chaoyang: traffic, delivery riders, pedestrians crossing."},
+  {name:"太原 · 双塔公园", en:"Shuangta Park, Taiyuan", pEn:"China · Shanxi · Taiyuan", place:"中国 · 山西 · 太原", lat:37.861, lon:112.574, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000023943357as1wkr.jpg", bili:23943357, page:"https://live.bilibili.com/23943357", refresh:30, tz:"Asia/Shanghai", cat:"城市", icon:"🏯", desc:"太原永祚寺双塔一带的慢直播。明代双塔是太原的地标，公园里常年有人跑步遛弯。", dEn:"Slow-live around the Ming-dynasty twin pagodas of Yongzu Temple — Taiyuan's landmark."},
+  {name:"深圳湾", en:"Shenzhen Bay", pEn:"China · Guangdong · Shenzhen", place:"中国 · 广东 · 深圳", lat:22.494, lon:113.944, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe1026124600002217238693tzt0.jpg", bili:22172386, page:"https://live.bilibili.com/22172386", refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"深圳湾慢直播，对岸就是香港元朗。冬天候鸟成群，傍晚跑步的人一波接一波。", dEn:"Shenzhen Bay looking across to Yuen Long, Hong Kong. Migratory birds in winter, runners at dusk."},
+  {name:"泸沽湖晨雾", en:"Lugu Lake Morning Mist", pEn:"China · Yunnan · Lijiang · Lugu Lake", place:"中国 · 云南 · 丽江 · 泸沽湖", lat:27.700, lon:100.796, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261245000024896254m422l5.jpg", bili:24896254, page:"https://live.bilibili.com/24896254", refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌫️", desc:"泸沽湖实景慢直播，清晨湖面起雾、猪槽船划过水面，川滇交界最安静的一汪水。", dEn:"Lugu Lake at dawn — mist on the water and wooden canoes. The quietest lake on the Yunnan–Sichuan border."},
+  {name:"元谋土林", en:"Yuanmou Earth Forest", pEn:"China · Yunnan · Chuxiong · Yuanmou", place:"中国 · 云南 · 楚雄 · 元谋", lat:25.683, lon:101.867, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261245001922174473w02xta.jpg", bili:1922174473, page:"https://live.bilibili.com/1922174473", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏜️", desc:"楚雄元谋的土林地貌，雨水把土层切成一排排土柱，日落时整片变成橘红色。", dEn:"The earth forest of Yuanmou — rain-carved soil pillars that turn orange at sunset."},
+  {name:"芬兰 · 拉普兰极光", en:"Lapland Aurora, Finland", pEn:"Finland · Lapland · Rovaniemi", place:"芬兰 · 拉普兰 · 罗瓦涅米", lat:66.504, lon:25.729, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000031050497qqvyf0.jpg", bili:31050497, page:"https://live.bilibili.com/31050497", refresh:30, tz:"Europe/Helsinki", cat:"星空", icon:"🌌", desc:"芬兰拉普兰的极光慢直播，正好在北极圈上。比阿拉斯加那个机位早 6 小时天黑。", dEn:"Aurora slow-live from Finnish Lapland on the Arctic Circle. Dark six hours earlier than the Fairbanks cam."},
+  {name:"南迦巴瓦 · 索松村", en:"Namcha Barwa from Songsong", pEn:"China · Tibet · Nyingchi · Songsong", place:"中国 · 西藏 · 林芝 · 索松村", lat:29.607, lon:94.919, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000023046729i2kaed.jpg", bili:23046729, page:"https://live.bilibili.com/23046729", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"林芝索松村的机位，正对南迦巴瓦和雅鲁藏布大峡谷。这个角度比米林那个更贴山脚，云层翻涌的层次更明显。", dEn:"Songsong village facing Namcha Barwa and the Yarlung Tsangpo gorge — closer under the peak than the Mainling angle."},
+  {name:"四姑娘山 · 双桥沟", en:"Mount Siguniang, Shuangqiao Valley", pEn:"China · Sichuan · Aba · Xiaojin", place:"中国 · 四川 · 阿坝 · 小金", lat:31.098, lon:102.901, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261250001940899751zb6k09.jpg", bili:1940899751, page:"https://live.bilibili.com/1940899751", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"🏔️", desc:"中国国家地理 · 文旅的景区联播机位，四姑娘山双桥沟的秋色：雪山、落叶松和河湾草地同框。轮播时段会切到别的景区。", dEn:"Autumn in Shuangqiao Valley below Mount Siguniang — snow peaks, larch forest, river meadows. The relay switches to other scenic areas at times."},
+  {name:"衢州 · 芳草地云海", en:"Quzhou Hilltop Sea of Cloud", pEn:"China · Zhejiang · Quzhou", place:"中国 · 浙江 · 衢州", lat:28.942, lon:118.872, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246001718159119hhyjmf.jpg", bili:1718159119, page:"https://live.bilibili.com/1718159119", refresh:30, tz:"Asia/Shanghai", cat:"自然", icon:"☁️", desc:"浙江衢州山顶度假酒店的机位，海拔近千米、竹林环绕，主打清晨的青山云海，夏天平均只有 24 度。", dEn:"A hilltop resort above Quzhou, Zhejiang at nearly 1,000 m — bamboo all around, morning seas of cloud, 24 °C summers."},
+  {name:"卧龙 · 神树坪熊猫基地", en:"Shenshuping Panda Base, Wolong", pEn:"China · Sichuan · Wenchuan · Wolong", place:"中国 · 四川 · 汶川 · 卧龙", lat:30.967, lon:103.167, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261250000022220821f12sa5.jpg", bili:22220821, page:"https://live.bilibili.com/22220821", refresh:30, tz:"Asia/Shanghai", cat:"野生动物", icon:"🐼", desc:"中国大熊猫保护研究中心卧龙神树坪基地的 24 小时慢直播，画面下方会打出当天当班的熊猫名字。", dEn:"24h slow-live from the Shenshuping base of the China Conservation and Research Centre for the Giant Panda. The banner names the pandas on duty."},
+  {name:"大熊谷 · 白头海雕巢", en:"Big Bear Bald Eagle Nest", pEn:"United States · California · Big Bear Valley", place:"美国 · 加州 · 大熊谷", lat:34.26, lon:-116.91, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000027209418wdnu2z.jpg", bili:27209418, page:"https://live.bilibili.com/27209418", refresh:30, tz:"America/Los_Angeles", cat:"野生动物", icon:"🦅", desc:"南加州大熊谷的鹰巢机位，离地 44 米，一对白头海雕常年在这里筑巢育雏，孵蛋季能连着看好几周。", dEn:"A bald eagle nest 44 m up a tree in Big Bear Valley, Southern California — one pair nests and raises chicks here, live year-round."},
+  {name:"稻城亚丁 · 银河", en:"Daocheng Yading Milky Way", pEn:"China · Sichuan · Garze · Daocheng", place:"中国 · 四川 · 甘孜 · 稻城", lat:28.438, lon:100.33, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000021723579ngghch.jpg", bili:21723579, page:"https://live.bilibili.com/21723579", refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"🌌", desc:"稻城亚丁的 4K 银河机位，海拔 4000 米以上，晴天夜里银河拱桥直接压在雪山顶上。白天是亚丁的三座神山。", dEn:"4K Milky Way over Daocheng Yading above 4,000 m — the galactic arch sits right on the snow peaks. By day it's the three sacred mountains."},
+  {name:"泸沽湖 · 蒗放星空", en:"Lugu Lake Night Sky, Langfang", pEn:"China · Yunnan · Lijiang · Lugu Lake", place:"中国 · 云南 · 丽江 · 泸沽湖", lat:27.69, lon:100.784, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246000022694438bdj9xj.jpg", bili:22694438, page:"https://live.bilibili.com/22694438", refresh:30, tz:"Asia/Shanghai", cat:"星空", icon:"✨", desc:"泸沽湖南岸蒗放码头的星空慢直播，画面左边最高的山峰是格姆女神山。每年 10 月到次年 5 月晴天最多。", dEn:"Night-sky slow-live from the south shore of Lugu Lake — Gemu Goddess Mountain is the high peak at frame left. Clearest October through May."},
+  {name:"冒纳凯亚天文台", en:"Mauna Kea Observatories", pEn:"United States · Hawaii · Mauna Kea", place:"美国 · 夏威夷 · 冒纳凯亚", lat:19.821, lon:-155.468, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261250000002065673kzernm.jpg", bili:2065673, page:"https://live.bilibili.com/2065673", refresh:30, tz:"Pacific/Honolulu", cat:"星空", icon:"🔭", desc:"夏威夷大岛冒纳凯亚山顶的天文台群机位，海拔 4200 米，全世界最好的观星点之一。左下角会打出夏威夷当地时间。", dEn:"The observatory domes on the summit of Mauna Kea, Hawai'i at 4,200 m — one of the best night skies on Earth. Hawaii local time is burned into the frame."},
+  {name:"金时山 · 望富士山", en:"Mt. Kintoki Looking at Fuji", pEn:"Japan · Kanagawa · Hakone · Mt. Kintoki", place:"日本 · 神奈川 · 箱根 · 金时山", lat:35.324, lon:139.011, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261246001755344228ed80y1.jpg", bili:1755344228, page:"https://live.bilibili.com/1755344228", refresh:30, tz:"Asia/Tokyo", cat:"自然", icon:"🗻", desc:"箱根金时山山顶「金太郎茶屋」的机位，正对富士山。天气好时整座锥体在画面正中，坏天气就只有一片白雾。", dEn:"From the Kintaro teahouse on the summit of Mt. Kintoki in Hakone, facing Fuji. On a clear day the whole cone sits centre-frame; otherwise it's white fog."},
+  {name:"上海 · 天际线实况", en:"Shanghai Skyline Live", pEn:"China · Shanghai", place:"中国 · 上海", lat:31.23, lon:121.473, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261250001815226932xcmmln.jpg", bili:1815226932, page:"https://live.bilibili.com/1815226932", refresh:30, tz:"Asia/Shanghai", cat:"城市", icon:"🌆", desc:"上海天际线的个人机位，配 jazz24 的背景音乐。白天看江面船来船往，入夜是陆家嘴的灯光。", dEn:"A private Shanghai skyline cam with jazz24 as background audio — river traffic by day, Lujiazui lights after dark."},
+  {name:"厦门 · 海景", en:"Xiamen Seafront", pEn:"China · Fujian · Xiamen", place:"中国 · 福建 · 厦门", lat:24.48, lon:118.089, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe102612500000221602282p2tt2.jpg", bili:22160228, page:"https://live.bilibili.com/22160228", refresh:30, tz:"Asia/Shanghai", cat:"水乡", icon:"🌊", desc:"厦门美亚柏科培训大楼的海景机位，看的是厦门岛东侧的海面和码头，天气好能看到对岸。", dEn:"A sea view from the Meiya Pico campus on Xiamen — open water and harbour on the east side of the island."},
+  {name:"国际空间站 · B 站转播", en:"ISS Relay on Bilibili", pEn:"Low Earth orbit · Bilibili relay", place:"近地轨道 · B 站转播", lat:0, lon:0, type:"img", src:"https://i0.hdslb.com/bfs/live-key-frame/keyframe10261250000000014047bpz7xk.jpg", bili:14047, page:"https://live.bilibili.com/14047", refresh:30, tz:"UTC", cat:"太空", icon:"🛰️", desc:"B 站 UP 主转播的国际空间站和 NASA 地面频道，有发射任务时会切到发射直播。不是固定地点，所以没打在地球上。", dEn:"A Bilibili relay of the ISS and NASA ground channels — switches to launch coverage when there is one. Not a fixed point, so it stays off the globe.", iss:true},
+];
 
 const CATS = {"城市":"#ff9f43","水乡":"#54c8ff","自然":"#7bed6d","野生动物":"#ffd32a","星空":"#b39dff","太空":"#ff7eb6"};
 
@@ -282,7 +300,6 @@ const UI={
     nbTitle:"这个频道关闭了第三方嵌入",
     nbBody:"直接在网页里播放会触发 YouTube 的 Error 153 / 150。点下面的按钮可以在新窗口看完整直播，画质和弹幕都正常。",
     nbBtn:"▶ 在 YouTube 观看",
-    tryBili:"▶ 试播 B 站播放器", backSnap:"📷 回到快照",
     empty:"没有符合条件的机位，换个筛选试试",
     issLabel:"🛰️ 国际空间站", issSub:"轨道直播 · 不在地球表面",
     srcHls:"直连", srcSnap:"快照",
@@ -306,7 +323,6 @@ const UI={
     nbTitle:"This channel blocks third-party embedding",
     nbBody:"Playing it inside a page triggers YouTube error 153 / 150. Use the button below to watch the full stream in a new window.",
     nbBtn:"▶ Watch on YouTube",
-    tryBili:"▶ Try Bilibili player", backSnap:"📷 Back to snapshot",
     empty:"No cameras match these filters — try loosening them",
     issLabel:"🛰️ International Space Station", issSub:"Orbital feed · not on the surface",
     srcHls:"HLS", srcSnap:"snap",
@@ -457,23 +473,6 @@ function renderBadge(cam){
     : (t==="img"||t==="sgapi") ? '<span class="livebadge img">'+L("badgeSnap")+'</span>'
     : '<span class="livebadge">'+L("live")+'</span>';
 }
-/* B 站：官方第三方播放器 blanc。B站接口对「外部 Referer」返回 403，对「无 Referer」返回 200，
-   所以 iframe 必须带 referrerpolicy="no-referrer"，否则播放器取不到流、一片黑。 */
-function setBiliMode(cam, on){
-  if(!cam || !cam.bili) return;
-  if(on){
-    snap.style.display="none"; vempty.style.display="none";
-    frame.referrerPolicy="no-referrer";
-    frame.style.display="block";
-    frame.src="https://live.bilibili.com/blanc/"+cam.bili+"?liteVersion=true&danmaku=false&highQuality=true&autoplay=true";
-  } else {
-    frame.removeAttribute("src"); frame.style.display="none";
-    frame.referrerPolicy="strict-origin-when-cross-origin";
-    snap.style.display="block";
-  }
-  const b=document.getElementById("biliBtn");
-  if(b) b.textContent = frame.style.display==="none" ? L("tryBili") : L("backSnap");
-}
 function renderPlayerTexts(){
   const cam=current; if(!cam) return;
   const t=camType(cam);
@@ -491,11 +490,6 @@ function renderPlayerTexts(){
     srcBtn.style.display=""; srcBtn.textContent=L("openPage"); srcBtn.onclick=()=>window.open(cam.page,"_blank");
   } else { srcBtn.style.display="none"; }
   if(cam.noembed) showNoEmbed(cam);
-  const bb=document.getElementById("biliBtn");
-  if(bb){
-    if(cam.bili){ bb.style.display=""; bb.textContent = frame.style.display==="none" ? L("tryBili") : L("backSnap"); }
-    else bb.style.display="none";
-  }
 }
 function showNoEmbed(cam){
   vempty.style.display="flex";
@@ -538,7 +532,6 @@ function openCam(cam, fly=true){
 }
 document.getElementById("close").onclick=()=>{ player.classList.remove("open"); player.classList.remove("max"); document.getElementById("expandBtn").textContent=L("expand"); stopMedia(); clearInterval(clockTimer); if(selPin){ selPin.remove(); selPin=null; } window.__pinCam=null; window.__pinEl=null; try{ map.setFilter("cam-sel",["==",["get","name"],"__none__"]); }catch(e){} };
 document.getElementById("expandBtn").onclick=e=>{ const m=player.classList.toggle("max"); e.target.textContent = m ? L("shrink") : L("expand"); };
-document.getElementById("biliBtn").onclick=()=>{ if(current && current.bili) setBiliMode(current, frame.style.display==="none"); };
 document.getElementById("nextBtn").onclick=()=>randomCam();
 document.getElementById("randomBtn").onclick=()=>randomCam();
 function randomCam(){ const pool=filteredCams().filter(c=>!c.disabled); if(!pool.length) return; openCam(pool[Math.floor(Math.random()*pool.length)]); }
