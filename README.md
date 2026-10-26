@@ -16,11 +16,13 @@ Everything lives in one `index.html`. No build step, no `npm install`, no backen
 - **Country borders** — one thin white line over the imagery, toggleable from the top bar. **China uses the AMap / DataV standard boundary** (Taiwan, the South China Sea islands and the nine-dash line are all included); every other country comes from Natural Earth 110m. The two disputed segments Natural Earth draws inside Chinese territory — Aksai Chin and the McMahon line — are dropped entirely, so the China line is only ever the standard one
 - **217 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station — plus **69 recorded walking tours**, one per city
 - **Five source types, auto-detected** — YouTube live embeds, YouTube walking-tour videos, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
-- **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, by category (city / coast / nature / wildlife / night sky / space / **walking tour**), and — for walking tours — by day or night; the pins on the globe are filtered along with the list
+- **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, by category (city / coast / nature / wildlife / night sky / space / **walking tour**), and — for walking tours — by day or night and by **spring / summer / autumn / winter / tropics**; the pins on the globe are filtered along with the list
 - **Bilingual, 中文 / English** — one toggle in the top-right corner, remembered across visits; every camera carries both languages
 - **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
 By category: cities 57 · coast & water 29 · nature 32 · wildlife 18 · night sky 8 · space 4 · **walking tours 69** (55 day / 14 night, 50 countries)
+
+Walking tours by season: spring 7 · summer 18 · autumn 27 · winter 10 · tropics (no seasons) 7
 
 By source: YouTube live 113 · YouTube walking tours 69 · Bilibili slow-live 24 · snapshot 7 · HLS 3 · open API 1
 
@@ -46,6 +48,7 @@ Every camera is one entry in the `const CAMS = [...]` array inside `index.html`.
 | `cat` | ✅ | `城市` / `水乡` / `自然` / `野生动物` / `星空` / `太空` / `漫游` (walking tour) |
 | `walk` | optional | `true` = this is a **recorded** walking tour, not a live stream. Skips the liveness check and shows a "recorded" badge instead of LIVE |
 | `tod` | with `walk` | `day` or `night`. Powers the extra ☀️/**🌙** filter and the tag next to the name |
+| `season` | with `walk` | `spring` / `summer` / `autumn` / `winter` / `tropics`. Powers the 🍂 season filter; shows an icon after the name and as the tooltip |
 | `len` | with `walk` | Runtime as it appears on YouTube, e.g. `1:12:40` |
 | `icon` | ✅ | A single emoji |
 | `desc` | ✅ | One or two plain sentences about **what you actually see**. No "8K cinematic beauty" filler |
@@ -117,11 +120,12 @@ The UI ships in Chinese and English. The toggle sits in the top-right corner, an
 
 Most of the site is live: fixed cameras and 24/7 streams. Walking tours are not. They are **recorded** first-person videos — someone walked through Lisbon for 78 minutes and uploaded it. 69 of them, one per city, 50 countries.
 
-That difference matters in four places:
+That difference matters in five places:
 
 - **They never "die" the way live streams do.** A live ID expires the moment the broadcaster restarts; a recorded video keeps the same ID for years. So `check-live.py` treats them separately — `walk:true` goes through the oEmbed check only, and reports `VOD` instead of `LIVE`.
 - **The badge says 🎬 步行漫游 · 录播**, not LIVE. Presenting a recording as a live feed would be a lie a viewer finds out in ten seconds anyway.
 - **Day or night is measured, not guessed.** The `tod` field comes from looking at the actual thumbnail — 55 day walks, 14 night walks. There is no API that tells you "this walk is at night"; you have to see it. A luminance average alone is not enough (overcast London reads as dark as Vegas at night), so the borderline ones were inspected by eye.
+- **Season is back-calculated from the upload date.** `season` takes each video's `publishDate` from the innertube `player` endpoint as a stand-in for the shooting month, then flips it for the southern hemisphere — December is summer in Auckland, Cape Town, Melbourne, Buenos Aires, Rio and Sydney. When the title names a season outright, the title wins: the Dubrovnik walk was uploaded in February but is titled "Perfect Summer Day". **The tropics do not get four seasons.** Inside ±15° latitude there is no seasonal cycle, so those seven walks (Bali, Bangkok, Ho Chi Minh City, Kuala Lumpur, Manila, Singapore, Lima) are tagged `tropics` rather than forced into "summer". The per-video evidence — ID, original title, publish date, final season — is in `walk-seasons.json` if you want to check any single entry.
 - **The map pin is the city centre**, not the exact street. A 90-minute walk covers a whole district; a single point would be false precision.
 
 If a walking tour ever disappears, the replacement path is different too: search YouTube for `<city> walking tour 4k`, keep candidates whose title contains the city name and whose duration is 15+ minutes, and require oEmbed `200`.
