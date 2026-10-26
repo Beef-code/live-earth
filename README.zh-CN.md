@@ -222,7 +222,12 @@ python check-live.py index.html
 - **能写死的 HLS 直连视频极少，而且会「假活」**。判断一条 m3u8 不能只看 master 是不是 200——必须顺着链子拉到 `.ts` 分片，再看子清单里有没有 `EXT-X-MEDIA-SEQUENCE` 在滚动。2026-10-26 踩过的两个例子：
   - **NASA TV**（`ntv1.akamaized.net/hls/live/2014075/...`）：master 返回 200、`Access-Control-Allow-Origin: *` 齐全，看着完全正常——但 `Last-Modified` 停在 **2024 年 3 月**，里面的 `master_500.m3u8` 是 **404**。整个是条化石流，已删除
   - **基韦斯特海滩**（`streamlock.net:444`）：域名能解析，但 444 / 1935 两个端口全部连不上（curl 返回 000），服务方早已停播，已删除
-  - 唯一还在滚动的只剩 **佛罗里达 30A 海岸**（`30a-tv.com/beachy.m3u8`），master、子清单、分片三级全 200 且带 CORS。但注意它的分片路径是 `2019_11_06_...`，属于**循环播放的录像**，不是真·实时镜头
+  - **佛罗里达 30A 海岸**（`30a-tv.com/beachy.m3u8`）也是「看着活着」的：master、子清单、`.ts` 分片三级全 200 且带 CORS。但它同时有两个问题。一是分片路径写着 `2021_05_19_...`，是**2021 年录像的循环**，不是镜头。二是它在 CORS 层就是坏的：nginx 把 `Access-Control-Allow-Origin: *` 发了**两遍**，浏览器直接拒收——报错原文是 *"The 'Access-Control-Allow-Origin' header contains multiple values '\*, \*', but only one is allowed."* 这就是它黑屏却没有任何错误提示的原因。2026-10-27 已删除。要注意后果：**站内现在一个能写死的 HLS 视频流都没有了**，所有视频机位都是 YouTube 嵌入。
+- **EarthCam 完全嵌不进来（2026-10-27 实测，三堵墙分别验证）：**
+  - **直连流**：`https://videos-3.earthcam.com/fecnetwork/<id>.flv/playlist.m3u8` 只有在 Referer 属于 earthcam.com 时才返回 200；不带 Referer 是 403，带外部 Referer 是 403，只带 `Origin` 也没用。**带签名**的形式（`?t=…&td=…`）确实能绕过 Referer 白名单，站外也能全链路拉通（master 200 → 子清单 200 → `.ts` 200，CORS 是 `*`），但 hls.js 填不进缓冲区：`MANIFEST_PARSED` 会触发、分片也在下载、`MediaSource` 的 duration 一直在涨，然而 `video.buffered` 始终为空、`FRAG_LOADED` 一次都不触发。不能用。
+  - **官方播放器**：`earthcam.com/js/video/embed.php?vid=<id>.flv` 在 Referer 为外部域时返回一张**占位图**（还会把你的 Referer 原样写进 HTML 注释里）；只有不带 Referer 才返回真播放器，而那个响应带 `X-Frame-Options: SAMEORIGIN`。
+  - **整页嵌入**：`earthcam.com/usa/.../?cam=<id>` 既没有 `X-Frame-Options` 也没有 CSP，确实能嵌——但这个页面**有反嵌入逻辑**。在 iframe 里它会抛 `SecurityError: Failed to read a named property 'pathname' from 'Location'`，接着尝试导航顶层窗口（`Unsafe attempt to initiate navigation`），初始化就此中断：`#ecnPlayer` 永远是个空 div。顺带量到了布局——页头 71 px，播放器固定 960×520——所以只要播放器肯加载，裁切方案本来是可行的。
+  - 另外要知道：EarthCam 真播起来的时候（直接打开原页），前面有 **约 17 秒前贴片广告**，还有一个 Cookiebot 弹窗，在第三方页面里关不掉。
 - **美国国家公园管理局（NPS）是最大的非 YouTube 来源**：`https://www.nps.gov/webcams-<公园代码>/<名字>.jpg` 是官方直连图，无防盗链、无广告、无 YouTube，分辨率普遍 1080p 至 4K（皇家岛那张是 3840×2160）。各公园的机位清单在其 `/learn/photosmultimedia/webcams.htm` 页面里，按公园代码逐个抓即可
 - **YouTube 直播 ID 会失效**：主播重开直播就换一个新的 11 位 ID，旧 ID 立刻变成「This live stream recording is not available」，机位点开就是死 iframe。这不是偶发——2026-10-26 全量扫了一遍，**121 个 YouTube 机位里 30 个已经结束**。需要定期重验。
   - 可靠判活：`POST https://www.youtube.com/youtubei/v1/player?prettyPrint=false`，body 为 `{"context":{"client":{"clientName":"WEB","clientVersion":"2.20241010.01.00"}},"videoId":"<ID>"}`，读 `videoDetails.isLive`。注意 `playabilityStatus` 即使是正常直播也返回 `UNPLAYABLE`（不做签名解密），别拿它判断。

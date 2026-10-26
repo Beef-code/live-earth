@@ -38,6 +38,9 @@ for (const c of CAMS) {
   } else if (c.tplStep) {
     console.error("tplStep without srcTpl:", c.name); problems++;
   }
+  if (c.type === "frame" || c.frame) {
+    console.error("frame-embed cam (EarthCam) is not supported — see notes:", c.name); problems++;
+  }
 }
 // cat coverage
 const byCat = {};
