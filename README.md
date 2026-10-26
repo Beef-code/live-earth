@@ -13,6 +13,7 @@ A single-file globe of live cameras. Spin the planet, click a dot, watch what is
 Everything lives in one `index.html`. No build step, no `npm install`, no backend.
 
 - **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
+- **Country borders** — one thin white line over the imagery, toggleable from the top bar. **China uses the AMap / DataV standard boundary** (Taiwan, the South China Sea islands and the nine-dash line are all included); every other country comes from Natural Earth 110m. The two disputed segments Natural Earth draws inside Chinese territory — Aksai Chin and the McMahon line — are dropped entirely, so the China line is only ever the standard one
 - **217 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station — plus **69 recorded walking tours**, one per city
 - **Five source types, auto-detected** — YouTube live embeds, YouTube walking-tour videos, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
 - **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, by category (city / coast / nature / wildlife / night sky / space / **walking tour**), and — for walking tours — by day or night; the pins on the globe are filtered along with the list

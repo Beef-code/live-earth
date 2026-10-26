@@ -46,6 +46,7 @@
   #filters select:focus{outline:1px solid #6db3ff}
   #list .empty{font-size:11.5px;color:#8fa8cc;padding:10px 4px;line-height:1.6}
   #langBtn{min-width:46px;font-weight:600}
+  #borderBtn.on{border-color:#6db3ff;background:rgba(22,64,124,.9);color:#fff;font-weight:600}
   /* 播放面板 */
   #player{position:absolute;right:14px;top:86px;width:min(520px,calc(100vw - 28px));z-index:6;background:rgba(6,13,28,.92);border:1px solid rgba(140,180,255,.35);border-radius:14px;overflow:hidden;backdrop-filter:blur(10px);transform:translateX(115%);transition:transform .35s cubic-bezier(.2,.8,.25,1);box-shadow:0 18px 50px rgba(0,0,0,.6)}
   /* 放大模式：盖住整个地球，只给左侧列表留出位置 */
@@ -87,6 +88,7 @@
   </div>
   <div class="tools">
     <button id="langBtn" title="中文 / English">EN</button>
+    <button id="borderBtn" class="on">🗺 边界</button>
     <button id="spinBtn">⏸ 暂停自转</button>
     <button id="randomBtn">🎲 随机飞一个</button>
   </div>
@@ -350,6 +352,7 @@ const UI={
     docTitle:"直播地球 · 世界风景直播",
     tagline:"点地球上的光点，看那个地方此时此刻的风景 · YouTube 直播 + 步行漫游录播 + 开放直连流 + 官方快照，开放的都收",
     spinPause:"⏸ 暂停自转", spinRun:"▶ 继续自转", random:"🎲 随机飞一个",
+    borders:"🗺 边界", bordersTip:"显示 / 隐藏国家边界（中国国界采用国家标准数据）",
     srcLabel:"来源", all:"全部", hlsShort:"直连流", snapShort:"快照", apiShort:"开放 API", biliShort:"B 站慢直播", badgeBili:"📺 B 站 24h 直播",
     countryLabel:"国家 / 地区", anyCountry:"全部国家", catLabel:"类型", anyCat:"全部类型",
     todLabel:"漫游时段", anyTod:"白天 + 夜晚", todDay:"☀️ 白天漫游", todNight:"🌙 夜间漫游",
@@ -376,6 +379,7 @@ const UI={
     docTitle:"Live Earth · World Live Cams",
     tagline:"Click a dot on the globe and watch that place right now · YouTube live, recorded walking tours, open HLS streams and official snapshots — everything that is open",
     spinPause:"⏸ Stop rotation", spinRun:"▶ Resume rotation", random:"🎲 Surprise me",
+    borders:"🗺 Borders", bordersTip:"Show / hide national borders (China drawn from the national standard dataset)",
     srcLabel:"SOURCE", all:"All", hlsShort:"HLS", snapShort:"Snapshot", apiShort:"Open API", biliShort:"Bilibili 24/7", badgeBili:"📺 Bilibili 24/7",
     countryLabel:"COUNTRY / REGION", anyCountry:"All countries", catLabel:"CATEGORY", anyCat:"All categories",
     todLabel:"WALK TIME", anyTod:"Day + night", todDay:"☀️ Day walk", todNight:"🌙 Night walk",
@@ -466,6 +470,66 @@ map.on("load",()=>{
   map.addLayer({id:"cam-halo",type:"circle",source:"cams",paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,11,4,17],"circle-color":["get","color"],"circle-opacity":0.35,"circle-blur":0.6}});
   map.addLayer({id:"cam-sel",type:"circle",source:"cams",filter:["==",["get","name"],"__none__"],paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,13,4,20],"circle-color":"rgba(0,0,0,0)","circle-stroke-color":"#ffffff","circle-stroke-width":2.5}});
   map.addLayer({id:"cam-core",type:"circle",source:"cams",paint:{"circle-radius":["interpolate",["linear"],["zoom"],1.5,5.5,4,8.5],"circle-color":["get","color"],"circle-stroke-color":"#ffffff","circle-stroke-width":2,"circle-stroke-opacity":0.95}});
+
+  /* ============ 国界 ============
+     中国：高德（DataV / AMap 坐标系）标准国界，含台湾、南海诸岛与九段线。
+     其余：Natural Earth 110m 陆地边界。
+     唯一要处理的一点：NE 把阿克赛钦、藏南按实际控制线画成「争议线」，与高德国界冲突。
+     凡是落在 72–136E / 3–54N 范围内的争议线整段丢掉，中国一侧只认高德那条线。 */
+  const BORDERS = {
+    world:"https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_110m_admin_0_boundary_lines_land.geojson",
+    cn:"https://geo.datav.aliyun.com/areas_v3/bound/100000.json"
+  };
+  let bordersOn=true;
+  try{ bordersOn = localStorage.getItem("le_borders")!=="0"; }catch(e){}
+
+  function buildBorders(w, cn){
+    const feats=[];
+    if(cn && cn.features && cn.features.length){
+      feats.push({type:"Feature",properties:{kind:"cn"},geometry:cn.features[0].geometry});
+    }
+    (w && w.features || []).forEach(f=>{
+      const g=f.geometry; if(!g) return;
+      const lines = g.type==="LineString" ? [g.coordinates]
+        : g.type==="MultiLineString" ? g.coordinates : [];
+      if(!lines.length) return;
+      if(/Disputed/i.test(((f.properties||{}).featureclass)||"")){
+        const l=lines[0], cx=l.reduce((a,p)=>a+p[0],0)/l.length, cy=l.reduce((a,p)=>a+p[1],0)/l.length;
+        if(cx>72 && cx<136 && cy>3 && cy<54) return;
+      }
+      lines.forEach(l=>feats.push({type:"Feature",properties:{kind:"world"},geometry:{type:"LineString",coordinates:l}}));
+    });
+    return {type:"FeatureCollection",features:feats};
+  }
+
+  function paintBorders(){
+    ["borders-halo","borders-line"].forEach(id=>{ if(map.getLayer(id)) map.setLayoutProperty(id,"visibility",bordersOn?"visible":"none"); });
+    const b=document.getElementById("borderBtn");
+    if(b){ b.classList.toggle("on",bordersOn); b.title=L("bordersTip"); }
+  }
+
+  fetch(BORDERS.world).then(r=>r.json()).catch(()=>null)
+  .then(w=>fetch(BORDERS.cn).then(r=>r.json()).then(cn=>buildBorders(w,cn)).catch(()=>buildBorders(w,null)))
+  .then(data=>{
+    if(!data || !data.features.length) return;
+    if(!map.getSource("borders")){
+      map.addSource("borders",{type:"geojson",data:data});
+      map.addLayer({id:"borders-halo",type:"line",source:"borders",
+        layout:{"line-join":"round","line-cap":"round","visibility":bordersOn?"visible":"none"},
+        paint:{"line-color":"rgba(0,0,0,0.45)","line-width":["interpolate",["linear"],["zoom"],1.5,2.2,4,3.4,7,5.0]}}, "cam-halo");
+      map.addLayer({id:"borders-line",type:"line",source:"borders",
+        layout:{"line-join":"round","line-cap":"round","visibility":bordersOn?"visible":"none"},
+        paint:{"line-color":"rgba(255,255,255,0.78)","line-width":["interpolate",["linear"],["zoom"],1.5,0.9,4,1.3,7,2.0]}}, "cam-halo");
+    } else { map.getSource("borders").setData(data); }
+    paintBorders();
+  }).catch(()=>{});
+
+  document.getElementById("borderBtn").onclick=()=>{
+    bordersOn=!bordersOn;
+    try{ localStorage.setItem("le_borders",bordersOn?"1":"0"); }catch(e){}
+    paintBorders();
+  };
+  paintBorders();
   const tip=document.getElementById("tip");
   map.on("mousemove","cam-core",e=>{ map.getCanvas().style.cursor="pointer"; const f=e.features[0]; const cam=CAMS.find(c=>c.name===f.properties.name)||{}; tip.style.display="block"; tip.style.left=(e.point.x+14)+"px"; tip.style.top=(e.point.y+10)+"px"; tip.textContent=camName(cam)+" · "+camPlace(cam); });
   map.on("mouseleave","cam-core",()=>{ map.getCanvas().style.cursor=""; tip.style.display="none"; });
@@ -704,6 +768,8 @@ function setLang(l){
   document.getElementById("spinBtn").textContent=spinning?L("spinPause"):L("spinRun");
   document.getElementById("randomBtn").textContent=L("random");
   document.getElementById("langBtn").textContent=isZh()?"EN":"中文";
+  const bBtn=document.getElementById("borderBtn");
+  if(bBtn){ bBtn.textContent=L("borders"); bBtn.title=L("bordersTip"); }
   document.getElementById("hint").textContent=L("hint");
   const fw=document.getElementById("fileWarnTxt"); if(fw) fw.innerHTML=L("fileWarn");
   if(current) renderPlayerTexts(); else vempty.textContent=L("pick");
