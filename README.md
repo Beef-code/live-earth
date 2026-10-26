@@ -1,53 +1,57 @@
-# 直播地球 · Live Earth
+# Live Earth
 
-一个单文件的「世界风景直播」地球仪。转地球 → 点一个点 → 就播那里的实况。
+[简体中文](README.zh-CN.md) · **English**
 
-线上地址：https://beef-code.github.io/live-earth/
+A single-file globe of live cameras. Spin the planet, click a dot, watch what is happening there right now.
 
----
-
-## 它是什么
-
-`index.html` 一个文件装下全部东西，没有构建、没有依赖安装、没有后端：
-
-- **3D 地球**：MapLibre GL JS（CDN 引入），机位点以 GL 图层贴在球面上
-- **137 个机位**：城市天际线、港口渔村、火山冰川、野生动物保护区、天文台、国际空间站
-- **点开就播**：YouTube 嵌入 / HLS 直连 / 官方快照三种源自动切换
-- **每个点多带当地时间**：按 IANA 时区每秒刷新，不看表也知道那边几点
-
-机位分布：城市 57 · 水乡 28 · 自然 27 · 野生动物 18 · 星空 4 · 太空 3
-
-源类型分布：YouTube 121 · 官方快照 12 · HLS 直连 3 · 开放 API 1
+**Live site:** https://beef-code.github.io/live-earth/
 
 ---
 
-## 加一个机位
+## What it is
 
-所有机位都在 `index.html` 里的 `const CAMS = [...]` 数组中，加一行就多一个点。
+Everything lives in one `index.html`. No build step, no `npm install`, no backend.
 
-### 字段
+- **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
+- **137 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
+- **Three source types, auto-detected** — YouTube embeds, direct HLS streams, and official snapshot images
+- **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
-| 字段 | 必填 | 说明 |
+By category: cities 57 · coast & water 28 · nature 27 · wildlife 18 · night sky 4 · space 3
+
+By source: YouTube 121 · snapshot 12 · HLS 3 · open API 1
+
+---
+
+## Adding a camera
+
+Every camera is one entry in the `const CAMS = [...]` array inside `index.html`. Add a line, get a pin.
+
+### Fields
+
+| Field | Required | Description |
 | --- | --- | --- |
-| `name` | ✅ | 唯一名称。地图点、列表、选中高亮都靠它，**不能重名** |
-| `en` | ✅ | 英文名，显示在副标题 |
-| `place` | ✅ | `国家 · 地区 · 更细`，例如 `尼泊尔 · 索卢昆布 · 海拔 3880 米` |
-| `lat` / `lon` | ✅ | 十进制度。国际空间站填 `0, 0` 并加 `iss:true` |
-| `tz` | ✅ | IANA 时区，例如 `Asia/Kuala_Lumpur`，用于当地时间 |
+| `name` | ✅ | Unique name. Drives the pin, the sidebar list, and selection highlighting — **must not repeat** |
+| `en` | ✅ | English name, shown as the subtitle |
+| `place` | ✅ | `Country · Region · detail`, e.g. `Nepal · Solukhumbu · 3,880 m` |
+| `lat` / `lon` | ✅ | Decimal degrees. For the ISS use `0, 0` plus `iss:true` |
+| `tz` | ✅ | IANA timezone, e.g. `Asia/Kuala_Lumpur`, used for local time |
 | `cat` | ✅ | `城市` / `水乡` / `自然` / `野生动物` / `星空` / `太空` |
-| `icon` | ✅ | 单个 emoji |
-| `desc` | ✅ | 一两句人话，写清画面里**能看到什么**，别写「8K 超清美景」这类空话 |
-| `yt` | 源 | YouTube **视频 ID**（`watch?v=` 后面那 11 位，不是整条链接） |
-| `type` | 源 | `hls` / `img` / `sgapi`，不填则按 `yt` 处理 |
-| `src` | 源 | `hls` 填 `.m3u8` 地址；`img` 填快照图片地址 |
-| `refresh` | 可选 | 快照刷新秒数，默认 60 |
-| `page` | 可选 | 源站页面，用于「在源站打开」按钮 |
-| `noembed` | 可选 | `true` = 该频道禁止第三方嵌入，不加载 iframe，改显示直达按钮 |
-| `iss` | 可选 | `true` = 国际空间站，不落在地表、不参与地图选点 |
+| `icon` | ✅ | A single emoji |
+| `desc` | ✅ | One or two plain sentences about **what you actually see**. No "8K cinematic beauty" filler |
+| `yt` | source | YouTube **video ID** (the 11 characters after `watch?v=`), not the full URL |
+| `type` | source | `hls` / `img` / `sgapi`. Defaults to YouTube when omitted |
+| `src` | source | `.m3u8` URL for `hls`; image URL for `img` |
+| `refresh` | optional | Snapshot refresh interval in seconds, default 60 |
+| `page` | optional | Original page, used by the "Open at source" button |
+| `noembed` | optional | `true` = channel blocks third-party embedding. Skips the iframe and shows a direct link instead |
+| `iss` | optional | `true` = International Space Station. Not placed on the surface, excluded from map selection |
 
-### 三个例子
+> `cat` values are Chinese because the UI is Chinese. Keep them as-is unless you translate the interface too.
 
-YouTube 直播：
+### Examples
+
+YouTube live stream:
 
 ```js
 {name:"富士山 · 河口湖", en:"Mount Fuji from Lake Kawaguchi", place:"日本 · 山梨 · 河口湖",
@@ -55,7 +59,7 @@ YouTube 直播：
  desc:"从大石公园看富士山，逆富士就出自这一带。晴天率最高的富士山机位之一，清晨湖面最平。"}
 ```
 
-HLS 直连（自有流、电视源，不经过 YouTube）：
+Direct HLS stream (your own feed, or a broadcaster's):
 
 ```js
 {name:"NASA 电视台", en:"NASA TV", place:"美国 · 佛罗里达 · 肯尼迪航天中心一带",
@@ -65,7 +69,7 @@ HLS 直连（自有流、电视源，不经过 YouTube）：
  desc:"NASA 官方直播频道的直连流（Akamai），不经过 YouTube：火箭发射、空间站活动、任务直播都走这条。"}
 ```
 
-官方快照（拿不到直播流时的兜底，`<img>` 定时换图）：
+Snapshot fallback (when no live stream exists, an `<img>` that reloads on a timer):
 
 ```js
 {name:"维港夜景 · 慢直播", en:"Victoria Harbour Slow-Live", place:"中国 · 香港",
@@ -75,7 +79,7 @@ HLS 直连（自有流、电视源，不经过 YouTube）：
  desc:"B 站 24 小时慢直播间的实时关键帧快照，无人机视角看维多利亚港。"}
 ```
 
-禁嵌频道（照常收录，但不加载 iframe）：
+Embed-blocked channel (still listed, never loaded in an iframe):
 
 ```js
 {name:"吉隆坡天际线", en:"KL Skyline", place:"马来西亚 · 吉隆坡",
@@ -84,106 +88,108 @@ HLS 直连（自有流、电视源，不经过 YouTube）：
  desc:"吉隆坡市区天际线机位，双子塔在画面里。"}
 ```
 
+All four examples above are real entries currently in the site.
+
 ---
 
-## 两个必须知道的坑
+## Two pitfalls worth knowing
 
-### 坑一：Error 153 · Video player configuration error
+### 1. Error 153 — "Video player configuration error"
 
-错误码含义是 `embedder.identity.missing.referrer`——**YouTube 内嵌播放器收不到 HTTP Referer**。
+The debug payload behind it reads `embedder.identity.missing.referrer`: **the YouTube player is not receiving an HTTP Referer**.
 
-- 页面里已经写了 `referrerpolicy="strict-origin-when-cross-origin"`（iframe 上）和 `<meta name="referrer">`（head 里），线上 https 页面正常
-- **直接双击 html 文件（`file://`）打开必然报 153**，因为 file:// 没有 origin 可发。这不是站点坏了
-- 本地调试请起 http 服务，见下方「本地预览」
+- The iframe already carries `referrerpolicy="strict-origin-when-cross-origin"`, and the `<head>` has a matching `<meta name="referrer">`. Served over https, it just works
+- **Opening the html by double-clicking (`file://`) will always throw 153** — a `file://` page has no origin to send. This is not a broken site
+- For local work, serve it over http (see below)
 
-### 坑二：频道关闭了第三方嵌入
+### 2. Embedding disabled by the channel
 
-频道主可以在后台关掉「允许嵌入」，这种视频怎么调都播不出来，`noembed:true` 让它显示直达按钮而不是报错。
+Channel owners can switch off "Allow embedding". No amount of markup will play those; that is what `noembed:true` is for.
 
-**判别方法**（`200` = 可嵌，`401` = 禁嵌）：
+**How to check** (`200` = embeddable, `401` = blocked):
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" \
   "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=VIDEO_ID&format=json"
 ```
 
-**顺手确认它现在真的在直播**（否则点开是个已结束的录像）：
+**Confirm it is actually live right now** (otherwise you are linking a finished broadcast):
 
 ```bash
 curl -s "https://www.youtube.com/watch?v=VIDEO_ID" -H "User-Agent: Mozilla/5.0" \
   | grep -c '"isLive":true'
 ```
 
-跑出一条经验：同一个运营方的多个频道权限可能不同。例如 **WEBCAM NEPAL LIVE 整频道禁嵌**，而 **WEBCAM NEPAL NATURE / HIMALAYA 可嵌**——选题先查频道，别一条条试。
+Hard-won lesson: **embedding permission is per channel, and sibling channels differ.** The whole `WEBCAM NEPAL LIVE` channel is embed-blocked, while `WEBCAM NEPAL NATURE` and `WEBCAM NEPAL HIMALAYA` are fine. Check the channel first instead of testing camera by camera.
 
 ---
 
-## 本地预览
+## Local preview
 
 ```bash
-cd <本项目目录>
+cd <project directory>
 python -m http.server 8770
 ```
 
-然后打开 http://127.0.0.1:8770/
+Then open http://127.0.0.1:8770/
 
-**不要**直接双击 `index.html`——会踩坑一的 Error 153。
+Do **not** open `index.html` directly from disk — that is pitfall 1, and you will see Error 153 on every camera.
 
 ---
 
-## 部署
+## Deploying
 
-GitHub Pages，`main` 分支根目录，纯静态：
+GitHub Pages, `main` branch, repo root. Pure static.
 
-1. 打开 https://github.com/Beef-code/live-earth
-2. **Add file** → **Upload files** → 拖入 `index.html`（拖文件，不要拖文件夹，否则会变成子目录）
-3. **Commit changes**，等 30–60 秒
-4. `Ctrl + Shift + R` 硬刷新线上地址
+1. Open https://github.com/Beef-code/live-earth
+2. **Add file** → **Upload files**, then drag in `index.html` (drag the file, not the folder — a folder creates a subdirectory and Pages will not find the homepage)
+3. **Commit changes**, wait 30–60 seconds
+4. Hard-refresh the live URL with `Ctrl + Shift + R`
 
-或者命令行：
+Or from the command line:
 
 ```bash
 git clone https://github.com/Beef-code/live-earth.git
 cd live-earth
-# 替换 index.html
+# replace index.html
 git commit -am "Update cams" && git push
 ```
 
 ---
 
-## 数据校验
+## Validation
 
-改完机位别直接推，先跑一遍检查（重复 ID、重复名称、缺字段、坐标越界、无源机位）：
+Run the checker before you push. It catches duplicate IDs, duplicate names, missing fields, out-of-range coordinates, and cameras with no source:
 
 ```bash
 node validate.js index.html
 ```
 
-输出 `ALL CHECKS PASSED` 才算过。
+Only trust it when it prints `ALL CHECKS PASSED`.
 
 ---
 
-## 已知限制
+## Known limitations
 
-- **国内平台全部禁嵌**：B 站 `X-Frame-Options: SAMEORIGIN`、央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同理；B 站 API 见外部 Origin 直接 403 且不带 CORS 头。所以国内机位只能走「实时关键帧快照」这条路，点「在源站打开」去 B 站看完整直播
-- **SkylineWebcams / earthTV 也禁嵌**（`SAMEORIGIN`），别指望用它们补城市机位
-- **YouTube 直播 ID 会失效**：主播重开一场直播就换 ID，需要定期重验
-- **吉隆坡没有可嵌的天际线直播源**，全网搜到的都是监控头和时间钟，只能用 `noembed` 直达
-- 纯静态、无后端：不能保存收藏，也不能代理播放
+- **Chinese platforms all block embedding.** Bilibili sends `X-Frame-Options: SAMEORIGIN`; CCTV's Yangshipin uses `CSP: frame-ancestors 'self'`; Douyin, Kuaishou, Huya and Douyu behave the same. Bilibili's API returns 403 with no CORS header when it sees a foreign `Origin`, so a static site cannot even fetch a stream URL. Domestic cameras therefore go through a **live keyframe snapshot** with an "Open at source" button to the actual room
+- **SkylineWebcams and earthTV block embedding too** (`SAMEORIGIN`). Do not count on them to fill city slots
+- **YouTube live IDs expire.** Restart a broadcast and the ID changes; cameras need re-verification periodically
+- **No embeddable Kuala Lumpur skyline exists.** Everything searchable is a traffic camera or a clock; the KL pin uses `noembed` and links out
+- Stateless and backend-free: no favourites, no proxying
 
 ---
 
-## 技术栈
+## Stack
 
-| 组件 | 版本 | 用途 |
+| Component | Version | Role |
 | --- | --- | --- |
-| MapLibre GL JS | 5.24.0 | 3D 地球与机位图层 |
-| hls.js | 1.5.18 | `.m3u8` 直连播放（Safari 走原生） |
+| MapLibre GL JS | 5.24.0 | 3D globe and camera layer |
+| hls.js | 1.5.18 | `.m3u8` playback (Safari uses native HLS) |
 
-均通过 jsDelivr CDN 引入，无打包步骤。
+Both loaded from jsDelivr. No bundler.
 
 ---
 
-## 声明
+## Credits
 
-所有直播画面的版权归各源站与频道方所有。本项目只做**公开直播的聚合与跳转播放**，不转存、不代理、不二次分发。若某频道主不希望被收录，删掉对应那一行即可。
+All footage belongs to the respective broadcasters and channels. This project only **aggregates and links out to publicly available live streams** — nothing is recorded, proxied, or redistributed. If a channel owner would rather not be listed, delete that one line from `CAMS`.
