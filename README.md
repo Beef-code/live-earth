@@ -13,15 +13,17 @@ A single-file globe of live cameras. Spin the planet, click a dot, watch what is
 Everything lives in one `index.html`. No build step, no `npm install`, no backend.
 
 - **3D globe** — MapLibre GL JS (via CDN), with camera pins drawn as a GL layer wrapped onto the sphere
-- **156 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
+- **148 cameras** — city skylines, harbours and fishing villages, volcanoes and glaciers, wildlife reserves, observatories, the International Space Station
 - **Four source types, auto-detected** — YouTube embeds, Bilibili live-keyframe snapshots, direct HLS streams, and official snapshot images
 - **Filters in the sidebar** — narrow by source (YouTube / Bilibili slow-live / HLS / snapshot / open API), by country, and by category; the pins on the globe are filtered along with the list
 - **Bilingual, 中文 / English** — one toggle in the top-right corner, remembered across visits; every camera carries both languages
 - **Local time on every pin** — ticking every second off the IANA timezone, so you never have to do the math
 
-By category: cities 61 · coast & water 31 · nature 32 · wildlife 20 · night sky 8 · space 4
+By category: cities 57 · coast & water 29 · nature 32 · wildlife 18 · night sky 8 · space 4
 
-By source: YouTube 121 · Bilibili slow-live 24 · snapshot 7 · HLS 3 · open API 1
+By source: YouTube 113 · Bilibili slow-live 24 · snapshot 7 · HLS 3 · open API 1
+
+Every YouTube pin was re-verified as actually live on **2026-10-26**.
 
 ---
 
@@ -182,13 +184,25 @@ node validate.js index.html
 
 Only trust it when it prints `ALL CHECKS PASSED`.
 
+That checker is **offline** — it cannot tell you whether a stream is still running. Run this one too before publishing, or periodically:
+
+```bash
+python check-live.py index.html
+```
+
+It goes out to the network and verifies every pin: YouTube via `videoDetails.isLive`, Bilibili via `live_status` plus a keyframe fetch, everything else via a HEAD on the source URL. Exit code is `0` when every camera is alive, `1` when something needs replacing. It takes about ten seconds.
+
 ---
 
 ## Known limitations
 
 - **Chinese platforms all block embedding.** Bilibili's `/blanc/{room}` player looked like the exception — it sends **no `X-Frame-Options` and no CSP**, and the stream API answers 200 when no Referer is sent — but the player stays black in practice (verified in headless Edge and in a real browser), so the Bilibili play-through was **removed**. What actually works is the keyframe: Bilibili's CDN answers **403 to a foreign Referer and 200 to no Referer at all**, so the `<img id="snap">` must carry `referrerpolicy="no-referrer"` — that one attribute is the whole trick. Everything else about Chinese platforms still holds: Bilibili sends `X-Frame-Options: SAMEORIGIN`; CCTV's Yangshipin uses `CSP: frame-ancestors 'self'`; Douyin, Kuaishou, Huya and Douyu behave the same. Bilibili's API returns 403 with no CORS header when it sees a foreign `Origin`, so a static site cannot even fetch a stream URL. Domestic cameras therefore go through a **live keyframe snapshot** with an "Open at source" button to the actual room
 - **SkylineWebcams and earthTV block embedding too** (`SAMEORIGIN`). Do not count on them to fill city slots
-- **YouTube live IDs expire.** Restart a broadcast and the ID changes; cameras need re-verification periodically
+- **YouTube live IDs expire.** A broadcaster restarting the stream gets a brand-new 11-character ID; the old one immediately becomes "This live stream recording is not available" and the pin shows a dead iframe. This is not rare — a full sweep on 2026-10-26 found **30 of 121 YouTube pins dead**. Re-verify periodically.
+  - Reliable check: `POST https://www.youtube.com/youtubei/v1/player?prettyPrint=false` with `{"context":{"client":{"clientName":"WEB","clientVersion":"2.20241010.01.00"}},"videoId":"<ID>"}` and read `videoDetails.isLive`. `playabilityStatus` is `UNPLAYABLE` even for healthy streams (no signature deciphering), so ignore it.
+  - Do **not** scrape the watch page: after a few dozen requests YouTube serves a 3 KB reCAPTCHA page instead of the video, which silently reads as "dead" and produced 30 false negatives before this was caught.
+  - Do **not** use `maxresdefault_live.jpg` as a liveness probe: it returns `200` for ended streams too.
+  - Finding the replacement: `https://www.youtube.com/channel/<channelId>/live` 302s to whatever that channel is streaming **right now**. For single-camera channels that is exactly right, but multi-camera channels (EarthCam, GiGAeyes Live TV) will happily hand you a different city — so match location words in the returned title before accepting it.
 - **Some channels block embedding outright** — `oEmbed` answers **401** instead of 200, and there is no way around it. The KL skyline and Lukla airport pins are in that bucket, so they carry `noembed:true` and skip the iframe entirely.
 - **YouTube `_live` thumbnails are the workaround for blocked channels.** `https://i.ytimg.com/vi/<ID>/maxresdefault_live.jpg` is the current live frame, it has **no hotlink protection at all** (works with any Referer, even `file://`), and it falls back through `hqdefault_live` → `hqdefault`. The catch is freshness: `Cache-Control: max-age=300`, so the CDN serves the same frame for **5 minutes** and a cache-busting query string does not help. Good enough as a still, useless as video. Those two pins use exactly this: a live still plus a button out
 - Stateless and backend-free: no favourites, no proxying

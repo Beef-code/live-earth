@@ -13,15 +13,17 @@
 `index.html` 一个文件装下全部东西，没有构建、没有依赖安装、没有后端：
 
 - **3D 地球**：MapLibre GL JS（CDN 引入），机位点以 GL 图层贴在球面上
-- **156 个机位**：城市天际线、港口渔村、火山冰川、野生动物保护区、天文台、国际空间站
+- **148 个机位**：城市天际线、港口渔村、火山冰川、野生动物保护区、天文台、国际空间站
 - **点开就播**：YouTube 嵌入 / B 站实时关键帧 / HLS 直连 / 官方快照四种源自动切换
 - **左栏筛选**：按来源（YouTube / B 站慢直播 / 直连流 / 快照 / 开放 API）、国家、类型三层筛，地图上的点跟着一起过滤
 - **中英双语**：右上角一键切换，选择记在 localStorage；每个机位都带两套文案
 - **每个点多带当地时间**：按 IANA 时区每秒刷新，不看表也知道那边几点
 
-机位分布：城市 61 · 水乡 31 · 自然 32 · 野生动物 20 · 星空 8 · 太空 4
+机位分布：城市 57 · 水乡 29 · 自然 32 · 野生动物 18 · 星空 8 · 太空 4
 
-源类型分布：YouTube 121 · B 站慢直播 24 · 官方快照 7 · HLS 直连 3 · 开放 API 1
+源类型分布：YouTube 113 · B 站慢直播 24 · 官方快照 7 · HLS 直连 3 · 开放 API 1
+
+所有 YouTube 机位已于 **2026-10-26** 全量复核为「确实在播」。
 
 ---
 
@@ -178,13 +180,25 @@ node validate.js index.html
 
 输出 `ALL CHECKS PASSED` 才算过。
 
+但它是**离线的**，判断不了直播是否还在播。发布前（或定期）再跑这个：
+
+```bash
+python check-live.py index.html
+```
+
+它会联网逐个复核：YouTube 读 `videoDetails.isLive`，B 站读 `live_status` 并取一次关键帧，其他源直接 HEAD。全部在播退出码为 `0`，有失效机位为 `1`。跑一遍十秒左右。
+
 ---
 
 ## 已知限制
 
 - **国内平台基本都禁嵌。B 站 `/blanc/{room}` 播放器看着像例外**——它确实没有 `X-Frame-Options` 也没有 CSP，取流 API 不带 Referer 也返回 200——但实测播放器一直是黑屏（无头 Edge 和真实浏览器都试过），所以 B 站试播按钮已经**移除**。真正能用的只有关键帧：B 站 CDN 对「外部 Referer」一律 403、对「完全不带 Referer」返回 200，所以 `<img id="snap">` 必须带 `referrerpolicy="no-referrer"`，就差这一个属性。其余限制照旧：央视频 `CSP: frame-ancestors 'self'`，抖音/快手/虎牙/斗鱼同样禁嵌，B 站 API 见外部 Origin 直接 403 且无 CORS 头
 - **SkylineWebcams / earthTV 也禁嵌**（`SAMEORIGIN`），别指望用它们补城市机位
-- **YouTube 直播 ID 会失效**：主播重开一场直播就换 ID，需要定期重验
+- **YouTube 直播 ID 会失效**：主播重开直播就换一个新的 11 位 ID，旧 ID 立刻变成「This live stream recording is not available」，机位点开就是死 iframe。这不是偶发——2026-10-26 全量扫了一遍，**121 个 YouTube 机位里 30 个已经结束**。需要定期重验。
+  - 可靠判活：`POST https://www.youtube.com/youtubei/v1/player?prettyPrint=false`，body 为 `{"context":{"client":{"clientName":"WEB","clientVersion":"2.20241010.01.00"}},"videoId":"<ID>"}`，读 `videoDetails.isLive`。注意 `playabilityStatus` 即使是正常直播也返回 `UNPLAYABLE`（不做签名解密），别拿它判断。
+  - **不要**去爬 watch 页面：请求几十次后 YouTube 会返回一个 3KB 的 reCAPTCHA 页面而不是视频页，看起来就像「视频已死」，这次就是这样误判出 30 个假死。
+  - **不要**用 `maxresdefault_live.jpg` 判活：已结束的直播它照样返回 200。
+  - 找替代：`https://www.youtube.com/channel/<channelId>/live` 会 302 跳到该频道**此刻**在播的那一场。单机位频道正好对，但 EarthCam、GiGAeyes Live TV 这类多机位频道会直接给你另一个城市——所以必须用标题里的地点词校验，否则纽约时代广场会被换成都柏林。
 - **部分频道直接关闭嵌入**：`oEmbed` 返回 **401** 而不是 200，没有绕过的办法。吉隆坡天际线、卢卡拉机场这两个机位就属于这类，所以带 `noembed:true`，根本不加载 iframe。
 - **YouTube 的 `_live` 缩略图是这类频道的解法**：`https://i.ytimg.com/vi/<ID>/maxresdefault_live.jpg` 就是当前直播帧，**完全没有防盗链**（任意 Referer 都能取，`file://` 也行），并会按 `hqdefault_live` → `hqdefault` 逐级回退。代价是新鲜度：`Cache-Control: max-age=300`，CDN 同一帧会持续返回 **5 分钟**，加随机参数也绕不过去。当静帧够用，当视频不行。这两个机位就是这么处理的：实时封面 + 一个跳转按钮
 - 纯静态、无后端：不能保存收藏，也不能代理播放
